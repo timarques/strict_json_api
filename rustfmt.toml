@@ -1,0 +1,2 @@
+use_small_heuristics = "Default"
+fn_call_width = 200

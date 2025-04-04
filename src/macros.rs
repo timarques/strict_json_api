@@ -130,16 +130,13 @@ fn generate_wrapper_object(
 #[crabtime::function]
 fn generate_object(
     pattern!(
-        $(
-            #[unsafe_markers(
-                $(
-                    $unsafe_marker:ty
-                ),+
-            )]
-        )?
+        $(#[unsafe_markers($($unsafe_marker:ty),+)])?
         $name:ty {
             $(
-                $(#[rename($rename:tt)])?
+                $(#[
+                    $flag:ident $(($arg:tt))?
+                ])*
+
                 $generic:ident: $constraint:ty : $($attribute:ident),+ : $value:ty ;
             )+
         }
@@ -160,66 +157,78 @@ fn generate_object(
     // -------------------------------
     use core::fmt::Write;
 
-    // Extract macro input components
-    const NAME: &str = stringify!($name);
-    const GENERICS: &[&str] = expand!(&[$(stringify!($generic)),*]);
-    const VALUES: &[&str] = expand!(&[$(stringify!($value)),*]);
-    const UNSAFE_MARKERS: &[&[&str]] = expand!(&[$(&[$(stringify!($unsafe_marker)),*]),*]);
-    const RENAMES: &[&[&str]] = expand!(&[$(&[$(stringify!($rename),),*],)*]);
-    const ATTRIBUTES: &[&[&str]] = expand!(&[$(&[$(stringify!($attribute)),+]),*]);
-    const CONSTRAINTS: &[&str] = expand!(&[$(stringify!($constraint)),+]);
+    const STRUCT_NAME: &str = stringify!($name);
+    const GENERIC_TYPES: &[&str] = expand!(&[$(stringify!($generic)),*]);
+    const VALUE_TYPES: &[&str] = expand!(&[$(stringify!($value)),*]);
+    const UNSAFE_TRAIT_MARKERS: &[&[&str]] = expand!(&[$(&[$(stringify!($unsafe_marker)),*]),*]);
+    const ATTRIBUTE_NAMES: &[&[&str]] = expand!(&[$(&[$(stringify!($attribute)),+]),*]);
+    const GENERIC_CONSTRAINTS: &[&str] = expand!(&[$(stringify!($constraint)),+]);
+    const FLAGS: &[&[&str]] = expand!(&[$(&[$(stringify!($flag)),*]),*]);
+    const FLAGS_ARGUMENTS: &[&[&[&str]]] = expand!(
+        &[
+            $(
+                &[
+                    $(
+                        &[
+                            $(stringify!($arg)),*
+                        ]
+                    ),*
+                ]
+            ),*
+        ]
+    );
+
+    let mut flags_map = std::collections::HashMap::new();
+
+    for (index, flags) in FLAGS.iter().enumerate() {
+        for flags_index in 0..flags.len() {
+            let flag = flags[flags_index];
+            let arguments = FLAGS_ARGUMENTS[index][flags_index];
+            flags_map.insert((index, flag), arguments);
+        }
+    }
 
     // -------------------------------
     // String Buffer Initialization
     // -------------------------------
-    let mut generics_string = String::with_capacity(256);
-    let mut attributes_string = String::with_capacity(256);
-    let mut constraints_string = String::with_capacity(256);
-    let mut attributes_meta = Vec::with_capacity(GENERICS.len());
+
+    let mut generic_types_string = String::with_capacity(256);
+    let mut struct_fields_string = String::with_capacity(256);
+    let mut constraint_definitions_string = String::with_capacity(256);
+
+    let mut extracted_inner_value_types = Vec::with_capacity(VALUE_TYPES.len());
+    let mut constraint_definitions_list = Vec::with_capacity(GENERIC_CONSTRAINTS.len());
+    let mut escaped_attribute_names = vec![vec![]; ATTRIBUTE_NAMES.len()];
+    let mut contains_present_constraint = vec![false; GENERIC_CONSTRAINTS.len()];
+    let mut is_value_optional_list = vec![false; VALUE_TYPES.len()];
 
     // -------------------------------
-    // Generic Parameter Processing
+    // Generic Type Processing
     // -------------------------------
-    for (index, generic) in GENERICS.iter().enumerate() {
-        if index > 0 {
-            attributes_string.push(',');
-            generics_string.push(',');
-            constraints_string.push(',');
+    for (index, generic_type) in GENERIC_TYPES.iter().enumerate() {
+        let attributes = ATTRIBUTE_NAMES[index];
+        let main_attribute = attributes[0];
+        let value_type = VALUE_TYPES[index];
+        let generic_constrains = GENERIC_CONSTRAINTS[index];
+
+        writeln!(&mut generic_types_string, "{generic_type},");
+        writeln!(&mut constraint_definitions_string, "{generic_type}: {generic_constrains},");
+        writeln!(&mut struct_fields_string, "{main_attribute}: {value_type},");
+
+        constraint_definitions_list.push(format!("{generic_type}: {generic_constrains}"));
+
+        contains_present_constraint[index] = generic_constrains.contains("Present");
+
+        for attribute in attributes {
+            let escaped_attribute_name = attribute.replace("r#", "");
+            escaped_attribute_names[index].push(escaped_attribute_name);
         }
 
-        generics_string.push_str(generic);
-
-        writeln!(&mut attributes_string, "pub {}: {}", ATTRIBUTES[index][0], VALUES[index]);
-        writeln!(&mut constraints_string, "{generic}: {}", CONSTRAINTS[index]);
-
-        attributes_meta.push(if VALUES[index].contains("Option") {
-            (true, extract_inner_type(VALUES[index]).leak() as &str)
+        if value_type.contains("Option") {
+            is_value_optional_list[index] = true;
+            extracted_inner_value_types.push(extract_inner_type(value_type).leak() as &str);
         } else {
-            (false, VALUES[index])
-        });
-    }
-
-    // -------------------------------
-    // Struct Definition Generation
-    // -------------------------------
-    let constraints_vec: Vec<String> = constraints_string.split(',').map(String::from).collect();
-
-    crabtime::output! {
-        #[derive(Debug)]
-        pub struct {{NAME}}<{{generics_string}}>
-        where {{constraints_string}}
-        {
-            {{attributes_string}}
-        }
-    }
-
-    if UNSAFE_MARKERS.len() > 0 {
-        for marker in UNSAFE_MARKERS[0] {
-            crabtime::output! {
-                unsafe impl <{{generics_string}}> {{marker}} for {{NAME}} <{{generics_string}}>
-                where {{constraints_string}}
-                {}
-            }
+            extracted_inner_value_types.push(value_type);
         }
     }
 
@@ -227,131 +236,197 @@ fn generate_object(
     // Methods
     // -------------------------------
 
-    let mut normal_methods = String::with_capacity(256);
-    for (index, attributes) in ATTRIBUTES.iter().copied().enumerate() {
-        let main_attribute = attributes[0];
-        let value_type = attributes_meta[index].1;
+    let mut methods_definitions_string = String::with_capacity(256);
+    for (index, attribute_names) in ATTRIBUTE_NAMES.iter().copied().enumerate() {
+        let main_attribute_name = attribute_names[0];
+        let value_type = extracted_inner_value_types[index];
 
-        if !attributes_meta[index].0 {
-            for attribute in attributes.iter() {
-                normal_methods.push_str(&crabtime::quote! {
+        // is a T not Option<T>
+        if !is_value_optional_list[index] {
+            for attribute_name in attribute_names.iter() {
+                methods_definitions_string.push_str(&crabtime::quote! {
                     #[inline]
-                    pub fn {{attribute}}(&self) -> &{{value_type}} {
-                        &self.{{main_attribute}}
+                    pub fn {{attribute_name}}(&self) -> &{{value_type}} {
+                        &self.{{main_attribute_name}}
                     }
                 });
-                normal_methods.push('\n');
             }
+        // is a Option<T> with Present constraint
+        } else if contains_present_constraint[index] {
+            for attribute_name in attribute_names.iter() {
+                methods_definitions_string.push_str(&crabtime::quote! {
+                    #[inline]
+                    pub fn {{attribute_name}}(&self) -> &{{value_type}} {
+                        unsafe {
+                            self.{{main_attribute_name}}.as_ref().unwrap_unchecked()
+                        }
+                    }
+                })
+            }
+        // is a Option<T>
+        } else {
+            for escaped_attribute_name in &escaped_attribute_names[index] {
+                methods_definitions_string.push_str(&crabtime::quote! {
+                    #[inline]
+                    pub fn get_{{escaped_attribute_name}}(&self) -> Option<&{{value_type}}> {
+                        self.{{main_attribute_name}}.as_ref()
+                    }
+                });
+            }
+        }
+    }
 
+    // -------------------------------
+    // Struct Definition Generation
+    // -------------------------------
+
+    crabtime::output! {
+        #[derive(Debug)]
+        pub struct {{STRUCT_NAME}}<{{generic_types_string}}>
+        where {{constraint_definitions_string}}
+        {
+            {{struct_fields_string}}
+        }
+
+        impl<{{generic_types_string}}> {{STRUCT_NAME}}<{{generic_types_string}}>
+        where {{constraint_definitions_string}}
+        {
+            {{methods_definitions_string}}
+        }
+    }
+
+    // -------------------------------
+    // Unsafe Trait Markers
+    // -------------------------------
+
+    if UNSAFE_TRAIT_MARKERS.len() > 0 {
+        for unsafe_marker in UNSAFE_TRAIT_MARKERS[0] {
+            crabtime::output! {
+                unsafe impl <{{generic_types_string}}> {{unsafe_marker}} for {{STRUCT_NAME}} <{{generic_types_string}}>
+                where {{constraint_definitions_string}}
+                {}
+            }
+        }
+    }
+
+    // -------------------------------
+    // Present acessors
+    // -------------------------------
+
+    for (index, attributes_names) in ATTRIBUTE_NAMES.iter().copied().enumerate() {
+        // is a T or have Present constraint
+        if !is_value_optional_list[index] || contains_present_constraint[index] {
             continue;
         }
 
-        let mut present_constraints = constraints_vec.clone();
-        if !present_constraints[index].contains("Present") {
-            present_constraints[index].push_str(" + crate::present::Present");
+        let main_attribute_name = attributes_names[0];
+        let value_type = extracted_inner_value_types[index];
 
-            for attribute in attributes.iter() {
-                let attribute = attribute.replace("r#", "");
-                normal_methods.push_str(&crabtime::quote! {
-                    #[inline]
-                    pub fn get_{{attribute}}(&self) -> Option<&{{value_type}}> {
-                        self.{{main_attribute}}.as_ref()
-                    }
-                });
-                normal_methods.push('\n');
+        let mut present_constraints_string = String::with_capacity(96);
+        for (list_index, constraint) in constraint_definitions_list.iter().enumerate() {
+            if list_index == index {
+                writeln!(
+                    &mut present_constraints_string,
+                    "{constraint} + crate::present::Present,"
+                );
+            } else {
+                writeln!(&mut present_constraints_string, "{constraint},");
             }
         }
 
-        let present_constraints_str = present_constraints.join(",");
-
         let mut accessors = String::with_capacity(96);
 
-        for attribute in attributes.iter() {
+        for attribute_name in attributes_names.iter() {
             accessors.push_str(&crabtime::quote! {
                 #[inline]
-                pub fn {{attribute}}(&self) -> &{{value_type}} {
+                pub fn {{attribute_name}}(&self) -> &{{value_type}} {
                     unsafe {
-                        self.{{main_attribute}}.as_ref().unwrap_unchecked()
+                        self.{{main_attribute_name}}.as_ref().unwrap_unchecked()
                     }
                 }
             });
         }
 
         crabtime::output! {
-            impl<{{generics_string}}> {{NAME}}<{{generics_string}}>
-            where {{present_constraints_str}}
+            impl<{{generic_types_string}}> {{STRUCT_NAME}}<{{generic_types_string}}>
+            where {{present_constraints_string}}
             {
                 {{accessors}}
             }
         }
     }
 
-    crabtime::output! {
-        impl<{{generics_string}}> {{NAME}}<{{generics_string}}>
-        where {{constraints_string}}
-        {
-            {{normal_methods}}
-        }
-    }
-
     // -------------------------------
     // Clone Implementation
     // -------------------------------
-    let mut clonable_constraints = String::with_capacity(256);
-    let mut assigns = String::with_capacity(256);
+    let mut clonable_constraints_string = String::with_capacity(256);
+    let mut clone_field_assignments = String::with_capacity(256);
 
-    for (index, attributes) in ATTRIBUTES.iter().enumerate() {
-        let constraint = &constraints_vec[index];
-        writeln!(&mut clonable_constraints, "{constraint} + Clone,");
+    for (index, attribute_names) in ATTRIBUTE_NAMES.iter().enumerate() {
+        let constraint_definition = &constraint_definitions_list[index];
+        writeln!(&mut clonable_constraints_string, "{constraint_definition} + Clone,");
 
-        let main_attribute = attributes[0];
-        writeln!(assigns, "{main_attribute}: self.{main_attribute}.clone(),");
+        let main_attribute_name = attribute_names[0];
+        writeln!(
+            clone_field_assignments,
+            "{main_attribute_name}: self.{main_attribute_name}.clone(),"
+        );
     }
 
     crabtime::output! {
-        impl<{{generics_string}}> Clone for {{NAME}}<{{generics_string}}>
-        where {{clonable_constraints}}
+        impl<{{generic_types_string}}> Clone for {{STRUCT_NAME}}<{{generic_types_string}}>
+        where {{clonable_constraints_string}}
         {
             fn clone(&self) -> Self {
                 Self {
-                    {{assigns}}
+                    {{clone_field_assignments}}
                 }
             }
         }
     }
 
-    let mut deserializable = String::with_capacity(256);
-    let mut bounds = String::with_capacity(256);
-    let mut helper_attributes = String::with_capacity(256);
-    let mut assigns = String::with_capacity(256);
+    // -------------------------------
+    // Deserialize Implementation
+    // -------------------------------
 
-    bounds.push('"');
+    let mut deserializable_constraints_string = String::with_capacity(256);
+    let mut deserialize_bounds = String::with_capacity(256);
+    let mut helper_struct_fields = String::with_capacity(256);
+    let mut deserialization_assignments = String::with_capacity(256);
 
-    for (index, generic) in GENERICS.iter().enumerate() {
-        let constraint = &constraints_vec[index];
-        writeln!(&mut deserializable, "{constraint} + serde::de::DeserializeOwned,");
-        writeln!(&mut bounds, "{generic}: serde::de::DeserializeOwned,");
+    deserialize_bounds.push('"');
 
-        if attributes_meta[index].0 {
-            writeln!(&mut helper_attributes, "#[serde(default)]");
+    for (index, generic_type) in GENERIC_TYPES.iter().enumerate() {
+        writeln!(&mut deserialize_bounds, "{generic_type}: serde::de::DeserializeOwned,");
+
+        writeln!(
+            &mut deserializable_constraints_string,
+            "{} + serde::de::DeserializeOwned,",
+            &constraint_definitions_list[index]
+        );
+
+        if is_value_optional_list[index] {
+            writeln!(&mut helper_struct_fields, "#[serde(default)]");
         }
 
-        if RENAMES[index].len() > 0 {
-            let rename = RENAMES[index][0];
-            writeln!(&mut helper_attributes, "#[serde(rename = \"{rename}\")]");
+        if let Some(rename_arguments) = flags_map.get(&(index, "rename")) {
+            writeln!(&mut helper_struct_fields, "#[serde(rename = \"{}\")]", rename_arguments[0]);
         }
 
-        let main_attribute = ATTRIBUTES[index][0];
-        let attribute_value = VALUES[index];
-        writeln!(&mut helper_attributes, "{main_attribute}: {attribute_value},");
-        writeln!(&mut assigns, "{main_attribute}: helper.{main_attribute},");
+        let main_attribute_name = ATTRIBUTE_NAMES[index][0];
+        let attribute_value_type = VALUE_TYPES[index];
+        writeln!(&mut helper_struct_fields, "{main_attribute_name}: {attribute_value_type},");
+        writeln!(
+            &mut deserialization_assignments,
+            "{main_attribute_name}: helper.{main_attribute_name},"
+        );
     }
 
-    bounds.push('"');
+    deserialize_bounds.push('"');
 
     crabtime::output! {
-        impl<'de, {{generics_string}}> serde::Deserialize<'de> for {{NAME}}<{{generics_string}}>
-        where {{deserializable}}
+        impl<'de, {{generic_types_string}}> serde::Deserialize<'de> for {{STRUCT_NAME}}<{{generic_types_string}}>
+        where {{deserializable_constraints_string}}
         {
             fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
             where
@@ -361,60 +436,66 @@ fn generate_object(
                 use serde::Deserialize;
 
                 #[derive(Deserialize)]
-                #[serde(bound = {{bounds}})]
-                struct Helper<{{generics_string}}>{
-                    {{helper_attributes}}
+                #[serde(bound = {{deserialize_bounds}})]
+                struct Helper<{{generic_types_string}}>{
+                    {{helper_struct_fields}}
                 }
 
-                let helper = Helper::<{{generics_string}}>::deserialize(deserializer)?;
+                let helper = Helper::<{{generic_types_string}}>::deserialize(deserializer)?;
 
                 Ok(Self {
-                    {{assigns}}
+                    {{deserialization_assignments}}
                 })
             }
         }
 
     }
 
-    let mut serializable = String::with_capacity(256);
-    let mut helper_attributes = String::with_capacity(256);
-    let mut assigns = String::with_capacity(256);
-    let mut bounds = String::with_capacity(256);
+    // -------------------------------
+    // Serialize Implementation
+    // -------------------------------
 
-    bounds.push('"');
+    let mut serializable_constraints_string = String::with_capacity(256);
+    let mut helper_struct_fields = String::with_capacity(256);
+    let mut serialize_assignments = String::with_capacity(256);
+    let mut serialize_bounds = String::with_capacity(256);
 
-    for (index, generic) in GENERICS.iter().enumerate() {
-        let constraint = &constraints_vec[index];
-        writeln!(&mut serializable, "{constraint} + serde::Serialize,");
-        writeln!(&mut bounds, "{generic}: serde::Serialize,");
+    serialize_bounds.push('"');
 
-        let main_attribute = ATTRIBUTES[index][0];
-        let attribute_value = VALUES[index];
-        let attribute_name = if RENAMES[index].len() > 0 {
-            let original_name = RENAMES[index][0];
-            if RENAMES[index][0] == "self" {
-                writeln!(&mut helper_attributes, "#[serde(rename = \"{original_name}\")]");
-                main_attribute
-            } else if RENAMES[index][0].starts_with("r#") {
-                let rename = RENAMES[index][0].replacen("r#", "", 1);
-                writeln!(&mut helper_attributes, "#[serde(rename = \"{rename}\")]");
-                main_attribute
+    for (index, generic_type) in GENERIC_TYPES.iter().enumerate() {
+        writeln!(
+            &mut serializable_constraints_string,
+            "{} + serde::Serialize,",
+            &constraint_definitions_list[index]
+        );
+        writeln!(&mut serialize_bounds, "{generic_type}: serde::Serialize,");
+
+        let main_attribute_name = ATTRIBUTE_NAMES[index][0];
+        let attribute_value = VALUE_TYPES[index];
+        let mut attribute_name = main_attribute_name;
+
+        if let Some(rename_arguments) = flags_map.get(&(index, "rename")) {
+            let original_name = rename_arguments[0];
+
+            if original_name == "self" {
+                writeln!(&mut helper_struct_fields, "#[serde(rename = \"{original_name}\")]");
+            } else if original_name.starts_with("r#") {
+                let original_name = original_name.replacen("r#", "", 1);
+                writeln!(&mut helper_struct_fields, "#[serde(rename = \"{original_name}\")]");
             } else {
-                original_name
+                attribute_name = original_name;
             }
-        } else {
-            main_attribute
-        };
+        }
 
-        writeln!(&mut helper_attributes, "{attribute_name}: &'de {attribute_value},");
-        writeln!(&mut assigns, "{attribute_name}: &self.{main_attribute},");
+        writeln!(&mut helper_struct_fields, "{attribute_name}: &'de {attribute_value},");
+        writeln!(&mut serialize_assignments, "{attribute_name}: &self.{main_attribute_name},");
     }
 
-    bounds.push('"');
+    serialize_bounds.push('"');
 
     crabtime::output! {
-        impl<{{generics_string}}> serde::Serialize for {{NAME}}<{{generics_string}}>
-        where {{serializable}}
+        impl<{{generic_types_string}}> serde::Serialize for {{STRUCT_NAME}}<{{generic_types_string}}>
+        where {{serializable_constraints_string}}
         {
             fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
             where
@@ -423,13 +504,13 @@ fn generate_object(
                 use serde::Serialize;
 
                 #[derive(Serialize)]
-                #[serde(bound = {{bounds}})]
-                struct Helper<'de, {{generics_string}}> {
-                    {{helper_attributes}}
+                #[serde(bound = {{serialize_bounds}})]
+                struct Helper<'de, {{generic_types_string}}> {
+                    {{helper_struct_fields}}
                 }
 
                 let helper = Helper {
-                    {{assigns}}
+                    {{serialize_assignments}}
                 };
 
                 helper.serialize(serializer)

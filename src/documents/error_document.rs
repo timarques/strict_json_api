@@ -1,15 +1,15 @@
-use super::super::present::{NotPresent, Present};
-use super::document::Document;
+use super::super::present::Present;
 use super::markers::{Errors, JsonApi, Links};
 
 use core::fmt::Debug;
 
-super::super::macros::generate_wrapper_object! {
-    ErrorDocument: Document<NotPresent, ERRORS, NotPresent, JSONAPI, LINKS, METADATA> {
-        ERRORS: Errors + Present;
-        JSONAPI: JsonApi;
-        LINKS: Links;
-        METADATA: Debug;
+super::super::macros::generate_object! {
+    ErrorDocument {
+        ERRORS: Errors: errors: Option<ERRORS>;
+        JSONAPI: JsonApi: jsonapi: Option<JSONAPI>;
+        LINKS: Links: links: Option<LINKS>;
+        #[rename(meta)]
+        METADATA: Debug: metadata, meta: Option<METADATA>;
     }
 }
 
@@ -32,6 +32,6 @@ where
     METADATA: Debug,
 {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        self.inner.errors().fmt(f)
+        self.errors().fmt(f)
     }
 }
