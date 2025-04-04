@@ -1,4 +1,4 @@
-# strict-json-api
+# strict_json_api
 
 > Strongly-typed Rust definitions for JSON:API v1.0/v1.1 structures
 
@@ -8,7 +8,7 @@
 
 ## Overview
 
-`strict-json-api` leverages Rust's type system to provide compile-time validation of [JSON:API](https://jsonapi.org/format/) structures. Instead of using generic maps that require runtime checks, this crate enforces explicit types for every part of your JSON:API documents.
+`strict_json_api` leverages Rust's type system to provide compile-time validation of [JSON:API](https://jsonapi.org/format/) structures. Instead of using generic maps that require runtime checks, this crate enforces explicit types for every part of your JSON:API documents.
 
 ## Benefits
 
@@ -28,7 +28,7 @@
 
 ```toml
 [dependencies]
-strict-json-api = "0.1.0"
+strict_json_api = "0.1.0"
 ```
 
 ## Usage Example

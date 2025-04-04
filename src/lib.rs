@@ -1,4 +1,4 @@
-//! # Strict JSON:API (`strict-json-api`)
+//! # Strict JSON:API (`strict_json_api`)
 //!
 //! This crate provides strongly-typed Rust definitions for representing
 //! [JSON:API v1.0/v1.1](https://jsonapi.org/format/) structures. It leverages Rust's
