@@ -14,5 +14,5 @@ fn main() {
     examples_docs.extend_from_slice(b"```");
 
     let output_dir = std::env::var("OUT_DIR").unwrap();
-    std::fs::write(format!("{output_dir}/examples.rs"), examples_docs).unwrap();
+    std::fs::write(format!("{output_dir}/examples.md"), examples_docs).unwrap();
 }

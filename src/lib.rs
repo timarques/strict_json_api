@@ -44,7 +44,7 @@
 //!    * Use `Option<T>` for uncertain presence, `NotPresent` for known-absent fields,
 //!      and `Present` only when guaranteed presence is needed for optimization.
 
-#![doc = include_str!(concat!(env!("OUT_DIR"), "/examples.rs"))]
+#![doc = include_str!(concat!(env!("OUT_DIR"), "/examples.md"))]
 
 pub mod document;
 pub mod document_error;
