@@ -43,108 +43,18 @@
 //!    * **`present::Present`:** Unsafe trait for guaranteed presence, enabling optimizations.
 //!    * Use `Option<T>` for uncertain presence, `NotPresent` for known-absent fields,
 //!      and `Present` only when guaranteed presence is needed for optimization.
-//!
-//! ## Module Overview
-//!
-//! * **`documents`:** Top-level JSON:API document structures and related markers.
-//! * **`error`:** Structures for JSON:API error objects and source information.
-//! * **`jsonapi`:** Structure for the top-level `jsonapi` member.
-//! * **`link`:** Structures for link objects and markers.
-//! * **`document_links`:** Common link structures for document's top level.
-//! * **`present`:** Contains the `Present` unsafe marker trait and the `NotPresent` type.
-//! * **`relationship`:** Structures for relationship objects and linkage.
-//! * **`resources`:** Structures for resource objects, resource identifier objects, and markers.
-//!
-//! ## Usage Example
-//!
-//! ```rust
-//! use serde::{Deserialize, Serialize};
-//! use strict_json_api::{
-//!     documents::DataDocument,
-//!     present::NotPresent,
-//!     resources::ResponseResource,
-//! };
-//! use core::str::FromStr;
-//! use core::fmt::Debug;
-//!
-//! // Define your specific attribute structure
-//! #[derive(Serialize, Deserialize, Debug, Clone)]
-//! pub struct ArticleAttributes {
-//!     pub title: String,
-//!     pub word_count: u32,
-//!     pub author_email: Option<String>, // Optional attribute
-//! }
-//!
-//! // --- Define Concrete Types ---
-//!
-//! // Using String for both Type and ID (implements required traits)
-//! type ArticleType = String;
-//! type ArticleId = String;
-//!
-//! // Define the concrete resource type
-//! type ArticleResource = ResponseResource<
-//!     ArticleType,               // TYPE
-//!     ArticleId,                 // ID
-//!     Option<ArticleAttributes>, // ATTRIBUTES: Optional
-//!     NotPresent,                // RELATIONSHIPS
-//!     NotPresent,                // LINKS
-//!     NotPresent,                // METADATA
-//! >;
-//!
-//! // Define the top-level document
-//! type ArticleDocument = DataDocument<
-//!     ArticleResource, // DATA
-//!     NotPresent,      // INCLUDED
-//!     NotPresent,      // JSONAPI
-//!     NotPresent,      // LINKS
-//!     NotPresent,      // METADATA
-//! >;
-//!
-//! // --- Deserialization ---
-//! let json_string = r#"{
-//!   "data": {
-//!     "type": "articles",
-//!     "id": "123",
-//!     "attributes": {
-//!       "title": "JSON:API Explained",
-//!       "word_count": 1500
-//!     }
-//!   }
-//! }"#;
-//!
-//! let doc: ArticleDocument = serde_json::from_str(json_string).expect("Failed to deserialize");
-//!
-//! // --- Accessing Data ---
-//! let resource = doc.data();
-//!
-//! // Access fields marked Present
-//! let resource_type = resource.r#type(); // or resource.kind()
-//! let resource_id = resource.id();
-//! println!("Type: {}, ID: {}", resource_type, resource_id);
-//!
-//! // Access optional fields safely
-//! if let Some(attributes) = resource.attributes() {
-//!     println!("Title: {}", attributes.title);
-//!     println!("Word Count: {}", attributes.word_count);
-//!     if let Some(email) = &attributes.author_email {
-//!         println!("Author Email: {}", email);
-//!     } else {
-//!         println!("Author Email: Not provided");
-//!     }
-//! } else {
-//!     println!("No attributes present.");
-//! }
-//! ```
-//!
 
+#![doc = include_str!(concat!(env!("OUT_DIR"), "/examples.rs"))]
+
+pub mod document;
+pub mod document_error;
 pub mod document_links;
-pub mod documents;
-pub mod error;
 pub mod jsonapi;
 pub mod link;
 pub mod present;
 pub mod relationship;
-pub mod resources;
+pub mod resource;
+pub mod resource_identifier;
 
 #[doc(hidden)]
 mod macros;

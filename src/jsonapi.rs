@@ -1,4 +1,4 @@
-use super::documents::markers::JsonApi as JsonApiMarker;
+use super::document::markers::JsonApi as JsonApiMarker;
 use super::link::markers::Link;
 use super::present::Present;
 use core::fmt::Debug;

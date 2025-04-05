@@ -1,8 +1,9 @@
 use core::fmt::Debug;
 use serde::{Deserialize, Serialize};
-use strict_json_api::documents::DataDocument;
+use strict_json_api::document::Document;
 use strict_json_api::present::NotPresent;
-use strict_json_api::resources::ResponseResource;
+use strict_json_api::resource::Resource;
+use strict_json_api::resource_identifier::ResourceIdentifier;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ArticleAttributes {
@@ -11,11 +12,10 @@ pub struct ArticleAttributes {
     pub author_email: Option<String>,
 }
 
+type ArticleIdentifier = ResourceIdentifier<String, String, NotPresent, NotPresent>;
 type ArticleResource =
-    ResponseResource<String, String, Option<ArticleAttributes>, NotPresent, NotPresent, NotPresent>;
-
-type ArticleDocument =
-    DataDocument<ArticleResource, NotPresent, NotPresent, NotPresent, NotPresent>;
+    Resource<ArticleIdentifier, Option<ArticleAttributes>, NotPresent, NotPresent>;
+type ArticleDocument = Document<ArticleResource, NotPresent, NotPresent, NotPresent, NotPresent>;
 
 #[test]
 fn test_01() {
@@ -34,8 +34,8 @@ fn test_01() {
 
     let resource = doc.data();
 
-    let resource_type: &String = resource.kind();
-    let resource_id: &String = resource.id();
+    let resource_type: &String = resource.identifier().r#type();
+    let resource_id: &String = resource.identifier().id();
     println!("Type: {}, ID: {}", resource_type, resource_id);
 
     if let Some(attributes) = resource.attributes() {

@@ -9,7 +9,7 @@ pub mod markers {
     impl<T> Source for Option<T> where T: Source {}
 }
 
-use super::documents::markers::Errors;
+use super::document::markers::Errors;
 use super::link::markers::Link;
 use super::present::Present;
 use core::fmt::Debug;

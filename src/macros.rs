@@ -434,6 +434,10 @@ fn generate_object(
             writeln!(&mut helper_struct_fields, "#[serde(default)]");
         }
 
+        if let Some(flatten) = flags_map.get(&(index, "flatten")) {
+            writeln!(&mut helper_struct_fields, "#[serde(flatten)]");
+        }
+
         if let Some(rename_arguments) = flags_map.get(&(index, "rename")) {
             writeln!(&mut helper_struct_fields, "#[serde(rename = \"{}\")]", rename_arguments[0]);
         }
