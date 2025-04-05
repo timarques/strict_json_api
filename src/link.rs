@@ -4,21 +4,21 @@ pub mod markers {
     use core::str::FromStr;
 
     #[allow(clippy::missing_safety_doc)]
-    pub unsafe trait HrefLanguage: Debug {}
+    pub trait HrefLanguage: Debug {}
 
-    unsafe impl HrefLanguage for String {}
-    unsafe impl HrefLanguage for &str {}
-    unsafe impl HrefLanguage for NotPresent {}
-    unsafe impl<T> HrefLanguage for Vec<T> where T: FromStr + Debug {}
-    unsafe impl<T> HrefLanguage for Option<T> where T: HrefLanguage {}
+    impl HrefLanguage for String {}
+    impl HrefLanguage for &str {}
+    impl HrefLanguage for NotPresent {}
+    impl<T> HrefLanguage for Vec<T> where T: FromStr + Debug {}
+    impl<T> HrefLanguage for Option<T> where T: HrefLanguage {}
 
     #[allow(clippy::missing_safety_doc)]
-    pub unsafe trait Link: Debug {}
+    pub trait Link: Debug {}
 
-    unsafe impl Link for String {}
-    unsafe impl Link for &str {}
-    unsafe impl Link for NotPresent {}
-    unsafe impl<L> Link for Option<L> where L: Link {}
+    impl Link for String {}
+    impl Link for &str {}
+    impl Link for NotPresent {}
+    impl<L> Link for Option<L> where L: Link {}
 }
 
 use super::present::Present;
@@ -27,7 +27,8 @@ use core::fmt::Debug;
 use core::str::FromStr;
 
 super::macros::generate_object! {
-    #[unsafe_markers(markers::Link, Present)]
+    #[markers(markers::Link)]
+    #[unsafe_markers(Present)]
     Link {
         TYPE: FromStr + Debug: r#type, kind: Option<TYPE>;
         HREF: FromStr + Debug + Present: href: HREF;

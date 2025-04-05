@@ -7,7 +7,8 @@ use serde::{Deserialize, Serialize};
 use core::str::FromStr;
 
 super::macros::generate_object! {
-    #[unsafe_markers(JsonApiMarker, Present)]
+    #[markers(JsonApiMarker)]
+    #[unsafe_markers(Present)]
     JsonApi {
         VERSION: FromStr + Debug: version: Option<VERSION>;
         #[rename(ext)]

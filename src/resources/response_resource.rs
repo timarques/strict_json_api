@@ -5,7 +5,8 @@ use core::fmt::Debug;
 use core::str::FromStr;
 
 super::super::macros::generate_object! {
-    #[unsafe_markers(Data, Present)]
+    #[markers(Data)]
+    #[unsafe_markers(Present)]
     ResponseResource {
         TYPE: FromStr + Debug + Present: r#type, kind: TYPE;
         ID: FromStr + Debug + Present: id: ID;
@@ -18,7 +19,8 @@ super::super::macros::generate_object! {
 }
 
 super::super::macros::generate_wrapper_object! {
-    #[unsafe_markers(Data, Included, Present)]
+    #[markers(Data, Included)]
+    #[unsafe_markers(Present)]
     ResponseResourceCollection: Vec<ResponseResource<TYPE, ID, ATTRIBUTES, RELATIONSHIPS, LINKS, METADATA>> {
         TYPE: FromStr + Debug + Present;
         ID: FromStr + Debug + Present;

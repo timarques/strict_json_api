@@ -3,10 +3,10 @@ pub mod markers {
     use core::fmt::Debug;
 
     #[allow(clippy::missing_safety_doc)]
-    pub unsafe trait Source: Debug {}
+    pub trait Source: Debug {}
 
-    unsafe impl Source for NotPresent {}
-    unsafe impl<T> Source for Option<T> where T: Source {}
+    impl Source for NotPresent {}
+    impl<T> Source for Option<T> where T: Source {}
 }
 
 use super::documents::markers::Errors;
@@ -25,7 +25,8 @@ super::macros::generate_object! {
 }
 
 super::macros::generate_object! {
-    #[unsafe_markers(markers::Source, Present)]
+    #[markers(markers::Source)]
+    #[unsafe_markers(Present)]
     Source {
         POINTER: FromStr + Debug: pointer: Option<POINTER>;
         PARAMETER: FromStr + Debug: parameter: Option<PARAMETER>;
@@ -49,7 +50,8 @@ super::macros::generate_object! {
 }
 
 super::macros::generate_wrapper_object! {
-    #[unsafe_markers(Errors, Present)]
+    #[markers(Errors)]
+    #[unsafe_markers(Present)]
     ErrorCollection: Vec<Error<ID, CODE, STATUS, DETAIL, TITLE, SOURCE, LINKS, METADATA>> {
         ID: FromStr + Debug;
         CODE: FromStr + Debug;

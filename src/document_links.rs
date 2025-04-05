@@ -1,11 +1,12 @@
-use super::documents::markers::Links;
+use super::documents::markers;
 use super::link::markers::Link;
 use super::present::Present;
 use core::fmt::Debug;
 use serde::{Deserialize, Serialize};
 
 super::macros::generate_object! {
-    #[unsafe_markers(Links, Present)]
+    #[markers(markers::Links)]
+    #[unsafe_markers(Present)]
     DocumentLinks {
         FIRST: Link: first: Option<FIRST>;
         LAST: Link: last: Option<LAST>;

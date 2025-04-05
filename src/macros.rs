@@ -2,6 +2,14 @@
 fn generate_wrapper_object(
     pattern!(
         $(
+            #[markers(
+                $(
+                    $marker:ty
+                ),+
+            )]
+        )?
+        $(
+
             #[unsafe_markers(
                 $(
                     $unsafe_marker:ty
@@ -22,6 +30,7 @@ fn generate_wrapper_object(
     const GENERICS: &[&str] = expand!(&[$(stringify!($generic)),*]);
     const CONSTRAINTS: &[&str] = expand!(&[$(stringify!($constraints)),*]);
     const UNSAFE_MARKERS: &[&[&str]] = expand!(&[$(&[$(stringify!($unsafe_marker)),*]),*]);
+    const MARKERS: &[&[&str]] = expand!(&[$(&[$(stringify!($marker)),*]),*]);
 
     let mut clauses = String::with_capacity(96);
     let mut deserialize_clauses = String::with_capacity(96);
@@ -76,15 +85,19 @@ fn generate_wrapper_object(
         }
     }
 
-    if UNSAFE_MARKERS.len() > 0 {
-        for marker in UNSAFE_MARKERS[0] {
+    UNSAFE_MARKERS
+        .iter()
+        .copied()
+        .flatten()
+        .map(|marker| ("unsafe ", marker))
+        .chain(MARKERS.iter().copied().flatten().map(|marker| ("", marker)))
+        .for_each(|(prefix, marker)| {
             crabtime::output! {
-                unsafe impl <{{generics}}> {{marker}} for {{NAME}} <{{generics}}>
+                {{prefix}} impl <{{generics}}> {{marker}} for {{NAME}} <{{generics}}>
                 where {{clauses}}
                 {}
             }
-        }
-    }
+        });
 
     crabtime::output! {
         impl<'de, {{generics}}> serde::Deserialize<'de> for {{NAME}} <{{generics}}>
@@ -130,6 +143,7 @@ fn generate_wrapper_object(
 #[crabtime::function]
 fn generate_object(
     pattern!(
+        $(#[markers($($marker:ty),+)])?
         $(#[unsafe_markers($($unsafe_marker:ty),+)])?
         $name:ty {
             $(
@@ -160,6 +174,7 @@ fn generate_object(
     const STRUCT_NAME: &str = stringify!($name);
     const GENERIC_TYPES: &[&str] = expand!(&[$(stringify!($generic)),*]);
     const VALUE_TYPES: &[&str] = expand!(&[$(stringify!($value)),*]);
+    const TRAIT_MARKERS: &[&[&str]] = expand!(&[$(&[$(stringify!($marker)),*]),*]);
     const UNSAFE_TRAIT_MARKERS: &[&[&str]] = expand!(&[$(&[$(stringify!($unsafe_marker)),*]),*]);
     const ATTRIBUTE_NAMES: &[&[&str]] = expand!(&[$(&[$(stringify!($attribute)),+]),*]);
     const GENERIC_CONSTRAINTS: &[&str] = expand!(&[$(stringify!($constraint)),+]);
@@ -296,18 +311,28 @@ fn generate_object(
     }
 
     // -------------------------------
-    // Unsafe Trait Markers
+    // Trait Markers
     // -------------------------------
 
-    if UNSAFE_TRAIT_MARKERS.len() > 0 {
-        for unsafe_marker in UNSAFE_TRAIT_MARKERS[0] {
+    UNSAFE_TRAIT_MARKERS
+        .iter()
+        .copied()
+        .flatten()
+        .map(|marker| ("unsafe ", marker))
+        .chain(
+            TRAIT_MARKERS
+                .iter()
+                .copied()
+                .flatten()
+                .map(|marker| ("", marker)),
+        )
+        .for_each(|(prefix, marker)| {
             crabtime::output! {
-                unsafe impl <{{generic_types_string}}> {{unsafe_marker}} for {{STRUCT_NAME}} <{{generic_types_string}}>
+                {{prefix}} impl <{{generic_types_string}}> {{marker}} for {{STRUCT_NAME}} <{{generic_types_string}}>
                 where {{constraint_definitions_string}}
                 {}
             }
-        }
-    }
+        });
 
     // -------------------------------
     // Present acessors

@@ -4,10 +4,10 @@ pub mod errors {
     use core::fmt::Debug;
 
     #[allow(clippy::missing_safety_doc)]
-    pub unsafe trait Errors: Debug {}
+    pub trait Errors: Debug {}
 
-    unsafe impl Errors for NotPresent {}
-    unsafe impl<T> Errors for Option<T> where T: Errors {}
+    impl Errors for NotPresent {}
+    impl<T> Errors for Option<T> where T: Errors {}
 }
 
 #[doc(hidden)]
@@ -17,10 +17,10 @@ pub mod included {
     use core::fmt::Debug;
 
     #[allow(clippy::missing_safety_doc)]
-    pub unsafe trait Included: Debug {}
+    pub trait Included: Debug {}
 
-    unsafe impl Included for NotPresent {}
-    unsafe impl<T> Included for Option<T> where T: Included {}
+    impl Included for NotPresent {}
+    impl<T> Included for Option<T> where T: Included {}
 }
 
 #[doc(hidden)]
@@ -29,10 +29,10 @@ pub mod data {
     use core::fmt::Debug;
 
     #[allow(clippy::missing_safety_doc)]
-    pub unsafe trait Data: Debug {}
+    pub trait Data: Debug {}
 
-    unsafe impl Data for NotPresent {}
-    unsafe impl<T> Data for Option<T> where T: Data {}
+    impl Data for NotPresent {}
+    impl<T> Data for Option<T> where T: Data {}
 }
 
 #[doc(hidden)]
@@ -41,10 +41,10 @@ pub mod json_api {
     use core::fmt::Debug;
 
     #[allow(clippy::missing_safety_doc)]
-    pub unsafe trait JsonApi: Debug {}
+    pub trait JsonApi: Debug {}
 
-    unsafe impl JsonApi for NotPresent {}
-    unsafe impl<T> JsonApi for Option<T> where T: JsonApi {}
+    impl JsonApi for NotPresent {}
+    impl<T> JsonApi for Option<T> where T: JsonApi {}
 }
 
 #[doc(hidden)]
@@ -53,10 +53,10 @@ pub mod links {
     use core::fmt::Debug;
 
     #[allow(clippy::missing_safety_doc)]
-    pub unsafe trait Links: Debug {}
+    pub trait Links: Debug {}
 
-    unsafe impl Links for NotPresent {}
-    unsafe impl<T> Links for Option<T> where T: Links {}
+    impl Links for NotPresent {}
+    impl<T> Links for Option<T> where T: Links {}
 }
 
 #[doc(inline)]
