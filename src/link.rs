@@ -1,44 +1,28 @@
-pub mod markers {
-    use super::super::present::NotPresent;
-    use core::fmt::Debug;
-    use core::str::FromStr;
-
-    #[allow(clippy::missing_safety_doc)]
-    pub trait HrefLanguage: Debug {}
-
-    impl HrefLanguage for String {}
-    impl HrefLanguage for &str {}
-    impl HrefLanguage for NotPresent {}
-    impl<T> HrefLanguage for Vec<T> where T: FromStr + Debug {}
-    impl<T> HrefLanguage for Option<T> where T: HrefLanguage {}
-
-    #[allow(clippy::missing_safety_doc)]
-    pub trait Link: Debug {}
-
-    impl Link for String {}
-    impl Link for &str {}
-    impl Link for NotPresent {}
-    impl<L> Link for Option<L> where L: Link {}
-}
-
-use super::present::Present;
+use super::present::{NotPresent, Present};
 
 use core::fmt::Debug;
 use core::str::FromStr;
 
+super::macros::generate_markers! {
+    HrefLanguage: Debug: String, &str, Vec<T>, Option<T>, NotPresent;
+    Link: Debug: String, &str, Option<T>, NotPresent;
+}
+
 super::macros::generate_object! {
-    #[markers(markers::Link)]
-    #[unsafe_markers(Present)]
-    Link {
-        TYPE: FromStr + Debug: r#type, kind: Option<TYPE>;
-        HREF: FromStr + Debug + Present: href: HREF;
+    #[mark(Link)]
+    #[unsafe_mark(Present)]
+    LinkObject {
+        // this needs to be present
+        href: HREF: FromStr + Debug + Present;
+        r#type, kind: Option<TYPE>: FromStr + Debug;
         #[rename(rel)]
-        RELATION: FromStr + Debug: relation, rel: RELATION;
+        relation, rel: Option<RELATION>: FromStr + Debug;
         #[rename(describedby)]
-        DESCRIBEDBY: FromStr + Debug: described_by: DESCRIBEDBY;
-        TITLE: FromStr + Debug: title: Option<TITLE>;
+        described_by: Option<DESCRIBEDBY>: FromStr + Debug;
+        title: Option<TITLE>: FromStr + Debug;
         #[rename(hreflang)]
-        HREFLANGUAGE: markers::HrefLanguage: href_language: Option<HREFLANGUAGE>;
-        META: Debug: template: Option<META>;
+        href_language: Option<HREFLANGUAGE>: HrefLanguage;
+        #[rename(meta)]
+        metadata, meta: Option<METADATA>: Debug;
     }
 }

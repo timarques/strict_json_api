@@ -1,66 +1,64 @@
-pub mod markers {
-    use super::super::present::NotPresent;
-    use core::fmt::Debug;
-
-    // ERRORS
-    pub trait Errors: Debug {}
-
-    impl Errors for NotPresent {}
-    impl<T> Errors for Option<T> where T: Errors {}
-
-    // INCLUDED
-    pub trait Included: Debug {}
-
-    impl Included for NotPresent {}
-    impl<T> Included for Option<T> where T: Included {}
-
-    // DATA
-    pub trait Data: Debug {}
-
-    impl Data for NotPresent {}
-    impl<T> Data for Option<T> where T: Data {}
-
-    // JSON_API
-    pub trait JsonApi: Debug {}
-
-    impl JsonApi for NotPresent {}
-    impl<T> JsonApi for Option<T> where T: JsonApi {}
-
-    // LINKS
-    pub trait Links: Debug {}
-
-    impl Links for NotPresent {}
-    impl<T> Links for Option<T> where T: Links {}
-}
-
-use self::markers::{Data, Errors, Included, JsonApi, Links};
-use super::present::Present;
+use super::error::Errors;
+use super::jsonapi::JsonApi;
+use super::link::Link;
+use super::pagination::Pagination;
+use super::present::{NotPresent, Present};
+use super::resource::{IncludedResources, Resource};
 
 use core::fmt::Debug;
 
+super::macros::generate_markers! {
+    Links: Debug: Option<T>, NotPresent;
+}
+
 super::macros::generate_object! {
-    Document {
-        DATA: Data: data: Option<DATA>;
-        INCLUDED: Included: included: Option<INCLUDED>;
-        JSONAPI: JsonApi: jsonapi: Option<JSONAPI>;
-        LINKS: Links: links: Option<LINKS>;
-        #[rename(meta)]
-        METADATA: Debug: metadata, meta: Option<METADATA>;
+    #[mark(Links)]
+    #[unsafe_mark(Present)]
+    DocumentLinksObject {
+        #[flatten]
+        pagination: Option<PAGINATION>: Pagination;
+        current, this: Option<CURRENT>: Link;
+        related: Option<RELATED>: Link;
+        #[rename(describedby)]
+        described_by: Option<DESCRIBEDBY>: Link;
     }
 }
 
 super::macros::generate_object! {
-    ErrorDocument {
-        ERRORS: Errors: errors: Option<ERRORS>;
-        JSONAPI: JsonApi: jsonapi: Option<JSONAPI>;
-        LINKS: Links: links: Option<LINKS>;
+    DocumentObject {
+        data: Option<DATA>: Resource;
+        included: Option<INCLUDED>: IncludedResources;
+        errors: Option<ERRORS>: Errors;
+        json_api: Option<JSONAPI>: JsonApi;
+        links: Option<LINKS>: Links;
         #[rename(meta)]
-        METADATA: Debug: metadata, meta: Option<METADATA>;
+        metadata, meta: Option<METADATA>: Debug;
+    }
+}
+
+super::macros::generate_wrapper_object! {
+    #[wrap]
+    DataDocumentObject: DocumentObject<DATA, INCLUDED, NotPresent, JSONAPI, LINKS, METADATA> {
+        DATA: Resource + Present;
+        INCLUDED: IncludedResources;
+        JSONAPI: JsonApi;
+        LINKS: Links;
+        METADATA: Debug;
+    }
+}
+
+super::macros::generate_wrapper_object! {
+    #[wrap]
+    ErrorDocumentObject: DocumentObject<NotPresent, NotPresent, ERRORS, JSONAPI, LINKS, METADATA> {
+        ERRORS: Errors + Present;
+        JSONAPI: JsonApi;
+        LINKS: Links;
+        METADATA: Debug;
     }
 }
 
 impl<ERRORS, JSONAPI, LINKS, METADATA> core::error::Error
-    for ErrorDocument<ERRORS, JSONAPI, LINKS, METADATA>
+    for ErrorDocumentObject<ERRORS, JSONAPI, LINKS, METADATA>
 where
     ERRORS: Errors + Present,
     JSONAPI: JsonApi,
@@ -70,7 +68,7 @@ where
 }
 
 impl<ERRORS, JSONAPI, LINKS, METADATA> core::fmt::Display
-    for ErrorDocument<ERRORS, JSONAPI, LINKS, METADATA>
+    for ErrorDocumentObject<ERRORS, JSONAPI, LINKS, METADATA>
 where
     ERRORS: Errors + Present,
     JSONAPI: JsonApi,
@@ -78,6 +76,6 @@ where
     METADATA: Debug,
 {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        self.errors().fmt(f)
+        self.inner.errors().fmt(f)
     }
 }

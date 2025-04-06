@@ -1,21 +1,23 @@
-use super::document::markers::JsonApi as JsonApiMarker;
-use super::link::markers::Link;
-use super::present::Present;
+use super::link::Link;
+use super::present::{NotPresent, Present};
 use core::fmt::Debug;
-use serde::{Deserialize, Serialize};
 
 use core::str::FromStr;
 
+super::macros::generate_markers! {
+    JsonApi: Debug: Option<T>, NotPresent;
+}
+
 super::macros::generate_object! {
-    #[markers(JsonApiMarker)]
-    #[unsafe_markers(Present)]
-    JsonApi {
-        VERSION: FromStr + Debug: version: Option<VERSION>;
+    #[mark(JsonApi)]
+    #[unsafe_mark(Present)]
+    JsonApiObject {
+        version: Option<VERSION>: FromStr + Debug;
         #[rename(ext)]
-        EXTENSION: Link: extensions: Vec<EXTENSION>;
+        extensions: Vec<EXTENSION>: Link;
         #[rename(profile)]
-        PROFILE: Link: profiles: Vec<PROFILE>;
+        profiles: Vec<PROFILE>: Link;
         #[rename(meta)]
-        METADATA: Debug: metadata, meta: Option<METADATA>;
+        metadata, meta: Option<METADATA>: Debug;
     }
 }

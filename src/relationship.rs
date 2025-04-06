@@ -1,38 +1,68 @@
-pub mod markers {
-    use super::super::present::NotPresent;
+use super::link::Link;
+use super::pagination::Pagination;
+use super::present::{NotPresent, Present};
+use super::resource_identifier::{
+    ResourceIdentifier, ResourceIdentifierCollection, ResourceIdentifierObject,
+};
+use core::fmt::Debug;
+use core::str::FromStr;
 
-    use core::fmt::Debug;
-
-    #[allow(clippy::missing_safety_doc)]
-    pub trait Data: Debug {}
-
-    #[allow(clippy::missing_safety_doc)]
-    pub trait Links: Debug {}
-
-    impl Links for NotPresent {}
-    impl<L> Links for Option<L> where L: Links {}
+super::macros::generate_markers! {
+    RelationshipLinks: Debug: Option<T>, NotPresent;
 }
 
-use super::link::markers::Link;
-use super::present::Present;
-use core::fmt::Debug;
-
 super::macros::generate_object! {
-    #[markers(markers::Links)]
-    #[unsafe_markers(Present)]
-    Links {
+    #[mark(RelationshipLinks)]
+    #[unsafe_mark(Present)]
+    RelationshipLinksObject {
         #[rename(self)]
-        CURRENT: Link: current, this: Option<CURRENT>;
-        RELATED: Link: related: Option<RELATED>;
+        current, this: Option<CURRENT>: Link;
+        related: Option<RELATED>: Link;
+        article: Option<ARTICLE>: Link;
+        #[flatten]
+        pagination: Option<PAGINATION>: Pagination;
     }
 }
 
 super::macros::generate_object! {
-    #[unsafe_markers(Present)]
-    Relationship {
-        DATA: markers::Data + Present: data: DATA;
-        LINKS: markers::Links: links: Option<LINKS>;
-        #[rename(meta)]
-        METADATA: Debug: metadata, meta: Option<METADATA>;
+    #[unsafe_mark(Present)]
+    RelationshipObject {
+        data, identifier: Option<DATA>: ResourceIdentifier;
+        links: Option<LINKS>: RelationshipLinks;
+        metadata, meta: Option<METADATA>: Debug;
+    }
 }
+
+super::macros::generate_wrapper_object! {
+    #[unsafe_mark(Present)]
+    #[wrap]
+    ResponseRelationshipObject: RelationshipObject<
+        ResourceIdentifierObject<ID, TYPE, NotPresent, DATA_METADATA>,
+        LINKS,
+        METADATA,
+    >
+    {
+        ID: FromStr + Debug + Present;
+        TYPE: FromStr + Debug + Present;
+        DATA_METADATA: Debug;
+        LINKS: RelationshipLinks;
+        METADATA: Debug;
+    }
+}
+
+super::macros::generate_wrapper_object! {
+    #[unsafe_mark(Present)]
+    #[wrap]
+    ResponseRelationshipCollection: RelationshipObject<
+        ResourceIdentifierCollection<ID, TYPE, NotPresent, DATA_METADATA>,
+        LINKS,
+        METADATA,
+    >
+    {
+        ID: FromStr + Debug + Present;
+        TYPE: FromStr + Debug + Present;
+        DATA_METADATA: Debug;
+        LINKS: RelationshipLinks;
+        METADATA: Debug;
+    }
 }

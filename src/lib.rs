@@ -47,14 +47,14 @@
 #![doc = include_str!(concat!(env!("OUT_DIR"), "/examples.md"))]
 
 pub mod document;
-pub mod document_error;
-pub mod document_links;
+pub mod error;
 pub mod jsonapi;
 pub mod link;
+pub mod pagination;
 pub mod present;
 pub mod relationship;
 pub mod resource;
 pub mod resource_identifier;
 
-#[doc(hidden)]
 mod macros;
+mod wrapper;

@@ -41,3 +41,4 @@ unsafe impl Present for u32 {}
 unsafe impl Present for usize {}
 unsafe impl Present for f32 {}
 unsafe impl<T> Present for Option<T> {}
+unsafe impl<T> Present for Vec<T> {}
