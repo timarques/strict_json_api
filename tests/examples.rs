@@ -35,7 +35,7 @@ fn test_01() {
 
     let resource = doc.data();
 
-    let resource_type: &String = resource.identifier().r#type();
+    let resource_type: &String = resource.identifier().resource_type();
     let resource_id: &String = resource.identifier().id();
     println!("Type: {}, ID: {}", resource_type, resource_id);
 

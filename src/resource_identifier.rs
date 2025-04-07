@@ -4,15 +4,17 @@ use core::str::FromStr;
 
 super::macros::generate_markers! {
     IsResourceIdentifier: Debug + Present;
-    IsSingleResourceIdentifier: IsResourceIdentifier;
-    IsResourceResponseIdentifier: IsResourceIdentifier;
+    IsResourceIdentifierSingle: IsResourceIdentifier;
+    IsResourceIdentifierCollecion: IsResourceIdentifier;
+    IsResourceIdentifierResponse: IsResourceIdentifier;
 }
 
 super::macros::generate_object! {
-    #[mark(IsResourceIdentifier, IsSingleResourceIdentifier)]
+    #[mark(IsResourceIdentifier, IsResourceIdentifierSingle)]
     #[unsafe_mark(Present)]
     ResourceIdentifier {
-        r#type, kind: TYPE: FromStr + Debug + Present;
+        #[rename(r#type)]
+        resource_type: TYPE: FromStr + Debug + Present;
         id: Option<ID>: FromStr + Debug;
         lid: Option<LID>: FromStr + Debug;
         #[rename(meta)]
@@ -21,7 +23,7 @@ super::macros::generate_object! {
 }
 
 super::macros::generate_alias! {
-    #[mark(IsResourceIdentifier)]
+    #[mark(IsResourceIdentifier, IsResourceIdentifierCollecion)]
     #[unsafe_mark(Present)]
     ResourceIdentifierCollection:
     Vec<
@@ -36,7 +38,7 @@ super::macros::generate_alias! {
 }
 
 super::macros::generate_alias! {
-    #[mark(IsResourceResponseIdentifier)]
+    #[mark(IsResourceIdentifierResponse)]
     ResourceResponseIdentifier:
     ResourceIdentifier<TYPE, ID, NotPresent, METADATA>
     {

@@ -1,5 +1,5 @@
 use super::present::{NotPresent, Present};
-use super::resource_identifier::{IsResourceResponseIdentifier, IsSingleResourceIdentifier};
+use super::resource_identifier::{IsResourceIdentifierResponse, IsResourceIdentifierSingle};
 
 use core::fmt::Debug;
 
@@ -14,7 +14,7 @@ super::macros::generate_object! {
     #[unsafe_mark(Present)]
     Resource {
         #[flatten]
-        identifier: Option<IDENTIFIER>: IsSingleResourceIdentifier;
+        identifier: Option<IDENTIFIER>: IsResourceIdentifierSingle;
         attributes: Option<ATTRIBUTES>: Debug;
         relationships: Option<RELATIONSHIPS>: Debug;
         links: Option<LINKS>: Debug;
@@ -34,7 +34,7 @@ super::macros::generate_alias! {
         >
     >
     {
-        IDENTIFIER: IsSingleResourceIdentifier;
+        IDENTIFIER: IsResourceIdentifierSingle;
         ATTRIBUTES: Debug;
         RELATIONSHIPS: Debug;
         LINKS: Debug;
@@ -51,7 +51,7 @@ super::macros::generate_alias! {
         LINKS
     >
     {
-        IDENTIFIER: IsSingleResourceIdentifier + IsResourceResponseIdentifier;
+        IDENTIFIER: IsResourceIdentifierSingle + IsResourceIdentifierResponse;
         ATTRIBUTES: Debug;
         RELATIONSHIPS: Debug;
         LINKS: Debug;
@@ -70,7 +70,7 @@ super::macros::generate_alias! {
         >,
     >
     {
-        IDENTIFIER: IsSingleResourceIdentifier + IsResourceResponseIdentifier;
+        IDENTIFIER: IsResourceIdentifierSingle + IsResourceIdentifierResponse;
         ATTRIBUTES: Debug;
         RELATIONSHIPS: Debug;
         LINKS: Debug;

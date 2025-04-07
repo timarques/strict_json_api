@@ -1,7 +1,9 @@
 use super::link::IsLink;
 use super::pagination_links::IsPaginationLinks;
 use super::present::{NotPresent, Present};
-use super::resource_identifier::IsResourceIdentifier;
+use super::resource_identifier::{
+    IsResourceIdentifier, IsResourceIdentifierCollecion, IsResourceIdentifierSingle,
+};
 use core::fmt::Debug;
 
 super::macros::generate_markers! {
@@ -22,25 +24,25 @@ super::macros::generate_object! {
 }
 
 super::macros::generate_object! {
-    RelationshipToOne {
-        data, identifier: IDENTIFIER: IsResourceIdentifier + Present;
+    Relationship {
+        data, identifier: IDENTIFIER: IsResourceIdentifier;
         links: Option<LINKS>: IsRelationshipLinks;
         metadata, meta: Option<METADATA>: Debug;
     }
 }
 
-super::macros::generate_alias! {
-    RelationshipToMany:
-    Vec<
-        RelationshipToOne<
-        IDENTIFIER,
-        LINKS,
-        METADATA
-        >
-    >
-    {
-        IDENTIFIER: IsResourceIdentifier + Present;
-        LINKS: IsRelationshipLinks;
-        METADATA: Debug;
+super::macros::generate_object! {
+    RelationshipToOne {
+        data, identifier: IDENTIFIER: IsResourceIdentifierSingle;
+        links: Option<LINKS>: IsRelationshipLinks;
+        metadata, meta: Option<METADATA>: Debug;
+    }
+}
+
+super::macros::generate_object! {
+    RelationshipToMany {
+        data, identifier: IDENTIFIER: IsResourceIdentifierCollecion;
+        links: Option<LINKS>: IsRelationshipLinks;
+        metadata, meta: Option<METADATA>: Debug;
     }
 }

@@ -14,7 +14,8 @@ super::macros::generate_object! {
     Link {
         // this needs to be present
         href: HREF: FromStr + Debug + Present;
-        r#type, kind: Option<TYPE>: FromStr + Debug;
+        #[rename(r#type)]
+        resource_type: Option<TYPE>: FromStr + Debug;
         #[rename(rel)]
         relation, rel: Option<RELATION>: FromStr + Debug;
         #[rename(describedby)]
