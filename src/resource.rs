@@ -1,12 +1,12 @@
 use super::present::{NotPresent, Present};
-use super::resource_identifier::{IsResourceIdentifierWithoutLid, IsSingularResourceIdentifier};
+use super::resource_identifier::{IsResourceResponseIdentifier, IsSingleResourceIdentifier};
 
 use core::fmt::Debug;
 
 super::macros::generate_markers! {
     IsResource: Debug: Option<T>, NotPresent;
-    IsResourceWithoutLid: IsResource: Option<T>, NotPresent;
-    IsResourceWithoutLidCollection: IsResourceWithoutLid: Option<T>, NotPresent;
+    IsResourceResponse: IsResource: Option<T>, NotPresent;
+    IsResourceResponseCollection: IsResourceResponse: Option<T>, NotPresent;
 }
 
 super::macros::generate_object! {
@@ -14,7 +14,7 @@ super::macros::generate_object! {
     #[unsafe_mark(Present)]
     Resource {
         #[flatten]
-        identifier: Option<IDENTIFIER>: IsSingularResourceIdentifier + Present;
+        identifier: Option<IDENTIFIER>: IsSingleResourceIdentifier;
         attributes: Option<ATTRIBUTES>: Debug;
         relationships: Option<RELATIONSHIPS>: Debug;
         links: Option<LINKS>: Debug;
@@ -34,7 +34,7 @@ super::macros::generate_alias! {
         >
     >
     {
-        IDENTIFIER: IsSingularResourceIdentifier + Present;
+        IDENTIFIER: IsSingleResourceIdentifier;
         ATTRIBUTES: Debug;
         RELATIONSHIPS: Debug;
         LINKS: Debug;
@@ -42,8 +42,8 @@ super::macros::generate_alias! {
 }
 
 super::macros::generate_alias! {
-    #[mark(IsResourceWithoutLid)]
-    ResourceWithoutLid:
+    #[mark(IsResourceResponse)]
+    ResourceResponse:
     Resource<
         IDENTIFIER,
         ATTRIBUTES,
@@ -51,7 +51,7 @@ super::macros::generate_alias! {
         LINKS
     >
     {
-        IDENTIFIER: IsSingularResourceIdentifier + IsResourceIdentifierWithoutLid + Present;
+        IDENTIFIER: IsSingleResourceIdentifier + IsResourceResponseIdentifier;
         ATTRIBUTES: Debug;
         RELATIONSHIPS: Debug;
         LINKS: Debug;
@@ -59,10 +59,10 @@ super::macros::generate_alias! {
 }
 
 super::macros::generate_alias! {
-    #[mark(IsResourceWithoutLid, IsResourceWithoutLidCollection)]
-    ResourceWithoutLidCollection:
+    #[mark(IsResourceResponse, IsResourceResponseCollection)]
+    ResourceResponseCollection:
     Vec<
-        Resource<
+        ResourceResponse<
             IDENTIFIER,
             ATTRIBUTES,
             RELATIONSHIPS,
@@ -70,7 +70,7 @@ super::macros::generate_alias! {
         >,
     >
     {
-        IDENTIFIER: IsSingularResourceIdentifier + IsResourceIdentifierWithoutLid + Present;
+        IDENTIFIER: IsSingleResourceIdentifier + IsResourceResponseIdentifier;
         ATTRIBUTES: Debug;
         RELATIONSHIPS: Debug;
         LINKS: Debug;

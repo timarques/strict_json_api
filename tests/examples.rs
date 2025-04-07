@@ -1,9 +1,9 @@
 use core::fmt::Debug;
 use serde::{Deserialize, Serialize};
-use strict_json_api::document::DocumentWithData;
+use strict_json_api::document::DocumentSuccessResponse;
 use strict_json_api::present::NotPresent;
 use strict_json_api::resource::Resource;
-use strict_json_api::resource_identifier::ResourceIdentifier;
+use strict_json_api::resource_identifier::ResourceResponseIdentifier;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ArticleAttributes {
@@ -12,11 +12,11 @@ pub struct ArticleAttributes {
     pub author_email: Option<String>,
 }
 
-type ArticleIdentifier = ResourceIdentifier<String, String, NotPresent, NotPresent>;
+type ArticleIdentifier = ResourceResponseIdentifier<String, String, NotPresent>;
 type ArticleResource =
     Resource<ArticleIdentifier, Option<ArticleAttributes>, NotPresent, NotPresent>;
 type ArticleDocument =
-    DocumentWithData<ArticleResource, NotPresent, NotPresent, NotPresent, NotPresent>;
+    DocumentSuccessResponse<ArticleResource, NotPresent, NotPresent, NotPresent, NotPresent>;
 
 #[test]
 fn test_01() {

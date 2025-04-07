@@ -1,7 +1,7 @@
 use super::link::IsLink;
 use super::pagination_links::IsPaginationLinks;
 use super::present::{NotPresent, Present};
-use super::resource_identifier::{IsResourceIdentifier, IsResourceIdentifierWithoutLid};
+use super::resource_identifier::IsResourceIdentifier;
 use core::fmt::Debug;
 
 super::macros::generate_markers! {
@@ -22,7 +22,7 @@ super::macros::generate_object! {
 }
 
 super::macros::generate_object! {
-    Relationship {
+    RelationshipToOne {
         data, identifier: IDENTIFIER: IsResourceIdentifier + Present;
         links: Option<LINKS>: IsRelationshipLinks;
         metadata, meta: Option<METADATA>: Debug;
@@ -30,9 +30,9 @@ super::macros::generate_object! {
 }
 
 super::macros::generate_alias! {
-    RelationshipCollection:
+    RelationshipToMany:
     Vec<
-        Relationship<
+        RelationshipToOne<
         IDENTIFIER,
         LINKS,
         METADATA
@@ -40,30 +40,6 @@ super::macros::generate_alias! {
     >
     {
         IDENTIFIER: IsResourceIdentifier + Present;
-        LINKS: IsRelationshipLinks;
-        METADATA: Debug;
-    }
-}
-
-super::macros::generate_object! {
-    RelationshipResponse {
-        data, identifier: IDENTIFIER: IsResourceIdentifierWithoutLid + Present;
-        links: Option<LINKS>: IsRelationshipLinks;
-        metadata, meta: Option<METADATA>: Debug;
-    }
-}
-
-super::macros::generate_alias! {
-    RelationshipResponseCollection:
-    Vec<
-        RelationshipResponse<
-        IDENTIFIER,
-        LINKS,
-        METADATA
-        >
-    >
-    {
-        IDENTIFIER: IsResourceIdentifierWithoutLid + Present;
         LINKS: IsRelationshipLinks;
         METADATA: Debug;
     }
