@@ -7,7 +7,23 @@ use super::resource_identifier::{
 use core::fmt::Debug;
 
 super::macros::generate_markers! {
-    IsRelationshipLinks: Debug: Option<T>, NotPresent;
+    IsRelationshipLinks: Debug {
+        #[wrap]
+        Option;
+        NotPresent;
+    }
+    IsRelationshipData: Debug {
+        #[dyn]
+        IsResourceIdentifier;
+    }
+    IsRelationshipToOneData: IsRelationshipData {
+        #[dyn]
+        IsResourceIdentifierSingle;
+    }
+    IsRelationshipToManyData: IsRelationshipData {
+        #[dyn]
+        IsResourceIdentifierCollecion;
+    }
 }
 
 super::macros::generate_object! {
@@ -19,13 +35,13 @@ super::macros::generate_object! {
         related: Option<RELATED>: IsLink;
         article: Option<ARTICLE>: IsLink;
         #[flatten]
-        pagination_links, pagination: Option<PAGINATION>: IsPaginationLinks;
+        pagination: Option<PAGINATION>: IsPaginationLinks;
     }
 }
 
 super::macros::generate_object! {
     Relationship {
-        data, identifier: IDENTIFIER: IsResourceIdentifier;
+        data: DATA: IsRelationshipData;
         links: Option<LINKS>: IsRelationshipLinks;
         metadata, meta: Option<METADATA>: Debug;
     }
@@ -33,7 +49,7 @@ super::macros::generate_object! {
 
 super::macros::generate_object! {
     RelationshipToOne {
-        data, identifier: IDENTIFIER: IsResourceIdentifierSingle;
+        data: DATA: IsRelationshipToOneData;
         links: Option<LINKS>: IsRelationshipLinks;
         metadata, meta: Option<METADATA>: Debug;
     }
@@ -41,7 +57,7 @@ super::macros::generate_object! {
 
 super::macros::generate_object! {
     RelationshipToMany {
-        data, identifier: IDENTIFIER: IsResourceIdentifierCollecion;
+        data: DATA: IsRelationshipToManyData;
         links: Option<LINKS>: IsRelationshipLinks;
         metadata, meta: Option<METADATA>: Debug;
     }

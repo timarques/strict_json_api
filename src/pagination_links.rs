@@ -3,7 +3,11 @@ use super::present::{NotPresent, Present};
 use core::fmt::Debug;
 
 super::macros::generate_markers! {
-    IsPaginationLinks: Debug: Option<T>, NotPresent;
+    IsPaginationLinks: Debug {
+        #[wrap]
+        Option;
+        NotPresent;
+    }
 }
 
 super::macros::generate_object! {

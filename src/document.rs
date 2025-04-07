@@ -3,12 +3,28 @@ use super::json_api::IsJsonApi;
 use super::link::IsLink;
 use super::pagination_links::IsPaginationLinks;
 use super::present::{NotPresent, Present};
-use super::resource::{IsResource, IsResourceResponseCollection};
+use super::resource::{IsResource, IsResourceResponse, IsResourceResponseCollection};
 
 use core::fmt::Debug;
 
 super::macros::generate_markers! {
-    IsDocumentLinks: Debug: Option<T>, NotPresent;
+    IsDocumentLinks: Debug {
+        #[wrap]
+        Option;
+        NotPresent;
+    }
+    IsDocumentPrimaryData: Debug {
+        #[dyn]
+        IsResource;
+    }
+    IsDocumentPrimaryDataResponse: Debug {
+        #[dyn]
+        IsResourceResponse;
+    }
+    IsDocumentIncluded: Debug {
+        #[dyn]
+        IsResourceResponseCollection;
+    }
 }
 
 super::macros::generate_object! {
@@ -16,7 +32,7 @@ super::macros::generate_object! {
     #[unsafe_mark(Present)]
     DocumentLinks {
         #[flatten]
-        pagination_links, pagination: Option<PAGINATION>: IsPaginationLinks;
+        pagination: Option<PAGINATION>: IsPaginationLinks;
         current, this: Option<CURRENT>: IsLink;
         related: Option<RELATED>: IsLink;
         #[rename(describedby)]
@@ -26,7 +42,7 @@ super::macros::generate_object! {
 
 super::macros::generate_object! {
     Document {
-        data: Option<DATA>: IsResource;
+        data: Option<DATA>: IsDocumentPrimaryData;
         included: Option<INCLUDED>: IsResourceResponseCollection;
         errors: Option<ERRORS>: IsErrorCollection;
         json_api: Option<JSONAPI>: IsJsonApi;
@@ -38,7 +54,7 @@ super::macros::generate_object! {
 
 super::macros::generate_object! {
     DocumentRequest {
-        data: DATA: IsResource + Present;
+        data: DATA: IsDocumentPrimaryData + Present;
         json_api: Option<JSONAPI>: IsJsonApi;
         links: Option<LINKS>: IsDocumentLinks;
         #[rename(meta)]
@@ -48,8 +64,8 @@ super::macros::generate_object! {
 
 super::macros::generate_object! {
     DocumentSuccessResponse {
-        data: DATA: IsResource + Present;
-        included: Option<INCLUDED>: IsResourceResponseCollection;
+        data: DATA: IsDocumentPrimaryDataResponse + Present;
+        included: Option<INCLUDED>: IsDocumentIncluded;
         json_api: Option<JSONAPI>: IsJsonApi;
         links: Option<LINKS>: IsDocumentLinks;
         #[rename(meta)]

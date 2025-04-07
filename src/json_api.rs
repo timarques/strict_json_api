@@ -5,7 +5,11 @@ use core::fmt::Debug;
 use core::str::FromStr;
 
 super::macros::generate_markers! {
-    IsJsonApi: Debug: Option<T>, NotPresent;
+    IsJsonApi: Debug {
+        #[wrap]
+        Option;
+        NotPresent;
+    }
 }
 
 super::macros::generate_object! {

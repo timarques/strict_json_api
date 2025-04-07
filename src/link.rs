@@ -4,8 +4,25 @@ use core::fmt::Debug;
 use core::str::FromStr;
 
 super::macros::generate_markers! {
-    IsHrefLanguage: Debug: String, &str, Vec<T>, Option<T>, NotPresent;
-    IsLink: Debug: String, &str, Option<T>, NotPresent;
+    IsHrefLanguage: Debug {
+        String;
+        &str;
+        #[wrap]
+        Vec;
+        #[wrap]
+        Option;
+        NotPresent;
+    }
+}
+
+super::macros::generate_markers! {
+    IsLink: Debug {
+        String;
+        &str;
+        #[wrap]
+        Option;
+        NotPresent;
+    }
 }
 
 super::macros::generate_object! {

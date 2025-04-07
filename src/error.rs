@@ -4,8 +4,18 @@ use core::fmt::Debug;
 use core::str::FromStr;
 
 super::macros::generate_markers! {
-    IsErrorSource: Debug: Option<T>, NotPresent;
-    IsErrorCollection: Debug: Option<T>, NotPresent, Vec<T>;
+    IsErrorSource: Debug {
+        #[wrap]
+        Option;
+        NotPresent;
+    }
+    IsErrorCollection: Debug {
+        NotPresent;
+        #[wrap]
+        Option;
+        #[wrap]
+        Vec;
+    }
 }
 
 // spec refers this as may, therefore no trait

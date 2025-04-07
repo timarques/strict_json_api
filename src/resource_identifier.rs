@@ -3,10 +3,10 @@ use core::fmt::Debug;
 use core::str::FromStr;
 
 super::macros::generate_markers! {
-    IsResourceIdentifier: Debug + Present;
-    IsResourceIdentifierSingle: IsResourceIdentifier;
-    IsResourceIdentifierCollecion: IsResourceIdentifier;
-    IsResourceIdentifierResponse: IsResourceIdentifier;
+    IsResourceIdentifier: Debug + Present {}
+    IsResourceIdentifierSingle: IsResourceIdentifier {}
+    IsResourceIdentifierCollecion: IsResourceIdentifier {}
+    IsResourceIdentifierWithoutLid: IsResourceIdentifier {}
 }
 
 super::macros::generate_object! {
@@ -38,8 +38,8 @@ super::macros::generate_alias! {
 }
 
 super::macros::generate_alias! {
-    #[mark(IsResourceIdentifierResponse)]
-    ResourceResponseIdentifier:
+    #[mark(IsResourceIdentifierWithoutLid)]
+    ResourceIdentifierWithoutLid:
     ResourceIdentifier<TYPE, ID, NotPresent, METADATA>
     {
         TYPE: FromStr + Debug + Present;

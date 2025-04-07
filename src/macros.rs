@@ -2,69 +2,61 @@
 fn generate_markers(
     pattern!(
         $(
-            $marker:ident:
+            $name:ident:
             $first_constraint:ty $(,$constraint:ty)*
-            $(:$first_type:ty $(,$_type:ty)*)?;
+            {
+                $(
+                    $(#[$flag:ident])?
+                    $_type:ty;
+                )*
+            }
         )+
     ): _,
 ) {
-    const MARKERS: &[&str] = expand!(&[$(stringify!($marker)),+]);
+    const NAMES: &[&str] = expand!(&[$(stringify!($name)),+]);
     const FIRST_CONSTRAINTS: &[&str] = expand!(&[$(stringify!($first_constraint)),+]);
     const CONSTRAINTS: &[&[&str]] = expand!(&[$(&[$(stringify!($constraint)),*]),*]);
-    const FIRST_TYPES: &[&[&str]] = expand!(&[$(&[$(stringify!($first_type)),*]),*]);
-    const TYPES: &[&[&[&str]]] = expand!(&[$(&[$(&[$(stringify!($_type)),*]),*]),*]);
+    const TYPES: &[&[&str]] = expand!(&[$(&[$(stringify!($_type)),*]),*]);
+    const FLAGS: &[&[&[&str]]] = expand!(&[$(&[$(&[$(stringify!($flag)),*]),*]),*]);
 
     use core::fmt::Write;
 
-    let mut buffer = String::with_capacity(128);
+    for (index, name) in NAMES.iter().copied().enumerate() {
+        let mut constraints = String::with_capacity(32);
+        constraints.push_str(FIRST_CONSTRAINTS[index]);
 
-    for (index, marker) in MARKERS.iter().enumerate() {
-        let _ = writeln!(&mut buffer, "pub trait {marker}: ");
-
-        for (constraint_index, constraint) in core::iter::once(FIRST_CONSTRAINTS[index])
-            .chain(CONSTRAINTS[index].iter().copied())
-            .enumerate()
-        {
-            if constraint_index != 0 {
-                buffer.push_str(" + ");
-            }
-            buffer.push_str(constraint);
+        for constraint in CONSTRAINTS[index] {
+            constraints.push_str(" + ");
+            constraints.push_str(constraint);
         }
 
-        buffer.push_str(" {} \n");
+        crabtime::output! {
+            pub trait {{name}}: {{constraints}} {}
+        }
 
-        for constraint in FIRST_TYPES[index]
-            .iter()
-            .copied()
-            .chain(TYPES[index].iter().copied().flatten().copied())
-        {
-            let mut chars = constraint.chars();
-            let mut constraint_type = String::with_capacity(10);
-            let mut needs_generic = false;
-
-            for c in chars {
-                if c == '<' {
-                    needs_generic = true;
-                    break;
+        for (type_index, _type) in TYPES[index].iter().enumerate() {
+            match FLAGS[index][type_index].get(0).copied() {
+                Some("wrap") => {
+                    crabtime::output! {
+                        impl <T> {{name}} for {{_type}}<T> where T: {{name}} {}
+                    }
                 }
-
-                constraint_type.push(c);
-            }
-
-            if needs_generic {
-                let _ = writeln!(
-                    &mut buffer,
-                    "impl <T> {marker} for {constraint_type}<T> where T: {marker} {{}}"
-                );
-            } else {
-                let _ = writeln!(&mut buffer, "impl {marker} for {constraint_type} {{}}");
+                Some("dyn") => {
+                    crabtime::output! {
+                        impl <T> {{name}} for T where T: {{_type}} {}
+                    }
+                }
+                None => {
+                    crabtime::output! {
+                        impl {{name}} for {{_type}} {}
+                    }
+                }
+                _ => {
+                    panic!("bad flag")
+                }
             }
         }
     }
-
-    crabtime::output! {
-        {{buffer}}
-    };
 }
 
 #[crabtime::function]
@@ -447,7 +439,8 @@ fn generate_object(
         }
 
         if let Some(rename_arguments) = flags_map.get(&(index, "rename")) {
-            writeln!(&mut helper_struct_fields, "#[serde(rename = \"{}\")]", rename_arguments[0]);
+            let rename = rename_arguments[0].replace("r#", "");
+            writeln!(&mut helper_struct_fields, "#[serde(rename = \"{rename}\")]");
         }
 
         let main_attribute_name = FIRST_ATTRIBUTE_NAMES[index];

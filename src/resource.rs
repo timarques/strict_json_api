@@ -1,12 +1,24 @@
 use super::present::{NotPresent, Present};
-use super::resource_identifier::{IsResourceIdentifierResponse, IsResourceIdentifierSingle};
+use super::resource_identifier::{IsResourceIdentifierSingle, IsResourceIdentifierWithoutLid};
 
 use core::fmt::Debug;
 
 super::macros::generate_markers! {
-    IsResource: Debug: Option<T>, NotPresent;
-    IsResourceResponse: IsResource: Option<T>, NotPresent;
-    IsResourceResponseCollection: IsResourceResponse: Option<T>, NotPresent;
+    IsResource: Debug {
+        #[wrap]
+        Option;
+        NotPresent;
+    }
+    IsResourceResponse: IsResource {
+        #[wrap]
+        Option;
+        NotPresent;
+    }
+    IsResourceResponseCollection: IsResourceResponse {
+        #[wrap]
+        Option;
+        NotPresent;
+    }
 }
 
 super::macros::generate_object! {
@@ -51,7 +63,7 @@ super::macros::generate_alias! {
         LINKS
     >
     {
-        IDENTIFIER: IsResourceIdentifierSingle + IsResourceIdentifierResponse;
+        IDENTIFIER: IsResourceIdentifierSingle + IsResourceIdentifierWithoutLid;
         ATTRIBUTES: Debug;
         RELATIONSHIPS: Debug;
         LINKS: Debug;
@@ -70,7 +82,7 @@ super::macros::generate_alias! {
         >,
     >
     {
-        IDENTIFIER: IsResourceIdentifierSingle + IsResourceIdentifierResponse;
+        IDENTIFIER: IsResourceIdentifierSingle + IsResourceIdentifierWithoutLid;
         ATTRIBUTES: Debug;
         RELATIONSHIPS: Debug;
         LINKS: Debug;
