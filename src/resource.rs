@@ -1,36 +1,32 @@
 use super::present::{NotPresent, Present};
-use super::resource_identifier::{
-    ResourceIdentifier, ResourceIdentifierCollection, ResourceIdentifierObject,
-};
+use super::resource_identifier::{IsResourceIdentifierWithoutLid, IsSingularResourceIdentifier};
 
 use core::fmt::Debug;
-use core::str::FromStr;
 
 super::macros::generate_markers! {
-    Resource: Debug: Option<T>, NotPresent, Vec<T>;
-    ResponseResource: Debug: Option<T>, NotPresent, Vec<T>;
-    IncludedResources: Debug: Option<T>, NotPresent;
+    IsResource: Debug: Option<T>, NotPresent;
+    IsResourceWithoutLid: IsResource: Option<T>, NotPresent;
+    IsResourceWithoutLidCollection: IsResourceWithoutLid: Option<T>, NotPresent;
 }
 
 super::macros::generate_object! {
-    #[mark(Resource)]
+    #[mark(IsResource)]
     #[unsafe_mark(Present)]
-    ResourceObject {
+    Resource {
         #[flatten]
-        identifier: Option<IDENTIFIER>: ResourceIdentifier;
+        identifier: Option<IDENTIFIER>: IsSingularResourceIdentifier + Present;
         attributes: Option<ATTRIBUTES>: Debug;
         relationships: Option<RELATIONSHIPS>: Debug;
         links: Option<LINKS>: Debug;
     }
 }
 
-super::macros::generate_wrapper_object! {
-    #[mark(Resource)]
+super::macros::generate_alias! {
+    #[mark(IsResource)]
     #[unsafe_mark(Present)]
-    #[wrap]
     ResourceCollection:
     Vec<
-        ResourceObject<
+        Resource<
             IDENTIFIER,
             ATTRIBUTES,
             RELATIONSHIPS,
@@ -38,60 +34,45 @@ super::macros::generate_wrapper_object! {
         >
     >
     {
-        IDENTIFIER: ResourceIdentifier;
+        IDENTIFIER: IsSingularResourceIdentifier + Present;
         ATTRIBUTES: Debug;
         RELATIONSHIPS: Debug;
         LINKS: Debug;
     }
 }
 
-super::macros::generate_wrapper_object! {
-    #[mark(ResponseResource, Resource)]
-    #[unsafe_mark(Present)]
-    #[wrap]
-    ResponseResourceObject:
-    ResourceObject<
-        ResourceIdentifierObject<
-            ID,
-            TYPE,
-            NotPresent,
-            METADATA
-        >,
+super::macros::generate_alias! {
+    #[mark(IsResourceWithoutLid)]
+    ResourceWithoutLid:
+    Resource<
+        IDENTIFIER,
         ATTRIBUTES,
         RELATIONSHIPS,
         LINKS
     >
     {
-        ID: FromStr + Debug + Present;
-        TYPE: FromStr + Debug + Present;
-        METADATA: Debug;
+        IDENTIFIER: IsSingularResourceIdentifier + IsResourceIdentifierWithoutLid + Present;
         ATTRIBUTES: Debug;
         RELATIONSHIPS: Debug;
         LINKS: Debug;
     }
 }
 
-super::macros::generate_wrapper_object! {
-    #[mark(ResponseResource, IncludedResources, Resource)]
-    #[unsafe_mark(Present)]
-    #[wrap]
-    ResponseResourceCollection:
-        ResourceObject<
-            ResourceIdentifierCollection<
-                ID,
-                TYPE,
-                NotPresent,
-                METADATA
-            >,
+super::macros::generate_alias! {
+    #[mark(IsResourceWithoutLid, IsResourceWithoutLidCollection)]
+    ResourceWithoutLidCollection:
+    Vec<
+        Resource<
+            IDENTIFIER,
             ATTRIBUTES,
             RELATIONSHIPS,
             LINKS
-        > {
-            ID: FromStr + Debug + Present;
-            TYPE: FromStr + Debug + Present;
-            METADATA: Debug;
-            ATTRIBUTES: Debug;
-            RELATIONSHIPS: Debug;
-            LINKS: Debug;
-        }
+        >,
+    >
+    {
+        IDENTIFIER: IsSingularResourceIdentifier + IsResourceIdentifierWithoutLid + Present;
+        ATTRIBUTES: Debug;
+        RELATIONSHIPS: Debug;
+        LINKS: Debug;
+    }
 }

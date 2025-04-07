@@ -1,9 +1,9 @@
 use core::fmt::Debug;
 use serde::{Deserialize, Serialize};
-use strict_json_api::document::DataDocumentObject;
+use strict_json_api::document::DocumentWithData;
 use strict_json_api::present::NotPresent;
-use strict_json_api::resource::ResourceObject;
-use strict_json_api::resource_identifier::ResourceIdentifierObject;
+use strict_json_api::resource::Resource;
+use strict_json_api::resource_identifier::ResourceIdentifier;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ArticleAttributes {
@@ -12,11 +12,11 @@ pub struct ArticleAttributes {
     pub author_email: Option<String>,
 }
 
-type ArticleIdentifier = ResourceIdentifierObject<String, String, NotPresent, NotPresent>;
+type ArticleIdentifier = ResourceIdentifier<String, String, NotPresent, NotPresent>;
 type ArticleResource =
-    ResourceObject<ArticleIdentifier, Option<ArticleAttributes>, NotPresent, NotPresent>;
+    Resource<ArticleIdentifier, Option<ArticleAttributes>, NotPresent, NotPresent>;
 type ArticleDocument =
-    DataDocumentObject<ArticleResource, NotPresent, NotPresent, NotPresent, NotPresent>;
+    DocumentWithData<ArticleResource, NotPresent, NotPresent, NotPresent, NotPresent>;
 
 #[test]
 fn test_01() {

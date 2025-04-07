@@ -48,13 +48,12 @@
 
 pub mod document;
 pub mod error;
-pub mod jsonapi;
+pub mod json_api;
 pub mod link;
-pub mod pagination;
+pub mod pagination_links;
 pub mod present;
 pub mod relationship;
 pub mod resource;
 pub mod resource_identifier;
 
 mod macros;
-mod wrapper;

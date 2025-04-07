@@ -1,68 +1,70 @@
-use super::link::Link;
-use super::pagination::Pagination;
+use super::link::IsLink;
+use super::pagination_links::IsPaginationLinks;
 use super::present::{NotPresent, Present};
-use super::resource_identifier::{
-    ResourceIdentifier, ResourceIdentifierCollection, ResourceIdentifierObject,
-};
+use super::resource_identifier::{IsResourceIdentifier, IsResourceIdentifierWithoutLid};
 use core::fmt::Debug;
-use core::str::FromStr;
 
 super::macros::generate_markers! {
-    RelationshipLinks: Debug: Option<T>, NotPresent;
+    IsRelationshipLinks: Debug: Option<T>, NotPresent;
 }
 
 super::macros::generate_object! {
-    #[mark(RelationshipLinks)]
+    #[mark(IsRelationshipLinks)]
     #[unsafe_mark(Present)]
-    RelationshipLinksObject {
+    RelationshipLinks {
         #[rename(self)]
-        current, this: Option<CURRENT>: Link;
-        related: Option<RELATED>: Link;
-        article: Option<ARTICLE>: Link;
+        current, this: Option<CURRENT>: IsLink;
+        related: Option<RELATED>: IsLink;
+        article: Option<ARTICLE>: IsLink;
         #[flatten]
-        pagination: Option<PAGINATION>: Pagination;
+        pagination_links, pagination: Option<PAGINATION>: IsPaginationLinks;
     }
 }
 
 super::macros::generate_object! {
-    #[unsafe_mark(Present)]
-    RelationshipObject {
-        data, identifier: Option<DATA>: ResourceIdentifier;
-        links: Option<LINKS>: RelationshipLinks;
+    Relationship {
+        data, identifier: IDENTIFIER: IsResourceIdentifier + Present;
+        links: Option<LINKS>: IsRelationshipLinks;
         metadata, meta: Option<METADATA>: Debug;
     }
 }
 
-super::macros::generate_wrapper_object! {
-    #[unsafe_mark(Present)]
-    #[wrap]
-    ResponseRelationshipObject: RelationshipObject<
-        ResourceIdentifierObject<ID, TYPE, NotPresent, DATA_METADATA>,
+super::macros::generate_alias! {
+    RelationshipCollection:
+    Vec<
+        Relationship<
+        IDENTIFIER,
         LINKS,
-        METADATA,
+        METADATA
+        >
     >
     {
-        ID: FromStr + Debug + Present;
-        TYPE: FromStr + Debug + Present;
-        DATA_METADATA: Debug;
-        LINKS: RelationshipLinks;
+        IDENTIFIER: IsResourceIdentifier + Present;
+        LINKS: IsRelationshipLinks;
         METADATA: Debug;
     }
 }
 
-super::macros::generate_wrapper_object! {
-    #[unsafe_mark(Present)]
-    #[wrap]
-    ResponseRelationshipCollection: RelationshipObject<
-        ResourceIdentifierCollection<ID, TYPE, NotPresent, DATA_METADATA>,
+super::macros::generate_object! {
+    RelationshipResponse {
+        data, identifier: IDENTIFIER: IsResourceIdentifierWithoutLid + Present;
+        links: Option<LINKS>: IsRelationshipLinks;
+        metadata, meta: Option<METADATA>: Debug;
+    }
+}
+
+super::macros::generate_alias! {
+    RelationshipResponseCollection:
+    Vec<
+        RelationshipResponse<
+        IDENTIFIER,
         LINKS,
-        METADATA,
+        METADATA
+        >
     >
     {
-        ID: FromStr + Debug + Present;
-        TYPE: FromStr + Debug + Present;
-        DATA_METADATA: Debug;
-        LINKS: RelationshipLinks;
+        IDENTIFIER: IsResourceIdentifierWithoutLid + Present;
+        LINKS: IsRelationshipLinks;
         METADATA: Debug;
     }
 }

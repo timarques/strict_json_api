@@ -4,13 +4,15 @@ use core::fmt::Debug;
 use core::str::FromStr;
 
 super::macros::generate_markers! {
-    ResourceIdentifier: Debug: Option<T>, NotPresent, Vec<T>;
+    IsResourceIdentifier: Debug: Option<T>, NotPresent;
+    IsSingularResourceIdentifier: IsResourceIdentifier: Option<T>, NotPresent;
+    IsResourceIdentifierWithoutLid: IsResourceIdentifier: Option<T>, NotPresent;
 }
 
 super::macros::generate_object! {
-    #[mark(ResourceIdentifier)]
+    #[mark(IsResourceIdentifier, IsSingularResourceIdentifier)]
     #[unsafe_mark(Present)]
-    ResourceIdentifierObject {
+    ResourceIdentifier {
         r#type, kind: TYPE: FromStr + Debug + Present;
         id: Option<ID>: FromStr + Debug;
         lid: Option<LID>: FromStr + Debug;
@@ -19,14 +21,45 @@ super::macros::generate_object! {
     }
 }
 
-super::macros::generate_wrapper_object! {
-    #[mark(ResourceIdentifier)]
+super::macros::generate_alias! {
+    #[mark(IsResourceIdentifier)]
     #[unsafe_mark(Present)]
-    #[wrap]
-    ResourceIdentifierCollection: Vec<ResourceIdentifierObject<TYPE, ID, LID, METADATA>> {
+    ResourceIdentifierCollection:
+    Vec<
+        ResourceIdentifier<TYPE, ID, LID, METADATA>
+    >
+    {
         TYPE: FromStr + Debug + Present;
-        ID: FromStr + Debug + Present;
+        ID: FromStr + Debug;
         LID: FromStr + Debug;
+        METADATA: Debug;
+    }
+}
+
+super::macros::generate_alias! {
+    #[mark(IsResourceIdentifierWithoutLid)]
+    ResourceIdentifierWithoutLid:
+    ResourceIdentifier<TYPE, ID, NotPresent, METADATA>
+    {
+        TYPE: FromStr + Debug + Present;
+        ID: FromStr + Debug;
+        METADATA: Debug;
+    }
+}
+
+super::macros::generate_alias! {
+    #[mark(IsResourceIdentifierWithoutLid)]
+    ResourceIdentifierWithoutLidCollection:
+    Vec<
+        ResourceIdentifierWithoutLid<
+            TYPE,
+            ID,
+            METADATA
+        >
+    >
+    {
+        TYPE: FromStr + Debug + Present;
+        ID: FromStr + Debug;
         METADATA: Debug;
     }
 }

@@ -3,16 +3,16 @@ fn generate_markers(
     pattern!(
         $(
             $marker:ident:
-            $first_constraint:ty $(,$constraint:ty)*:
-            $first_type:ty $(,$_type:ty)*;
+            $first_constraint:ty $(,$constraint:ty)*
+            $(:$first_type:ty $(,$_type:ty)*)?;
         )+
     ): _,
 ) {
     const MARKERS: &[&str] = expand!(&[$(stringify!($marker)),+]);
     const FIRST_CONSTRAINTS: &[&str] = expand!(&[$(stringify!($first_constraint)),+]);
     const CONSTRAINTS: &[&[&str]] = expand!(&[$(&[$(stringify!($constraint)),*]),*]);
-    const FIRST_TYPES: &[&str] = expand!(&[$(stringify!($first_type)),+]);
-    const TYPES: &[&[&str]] = expand!(&[$(&[$(stringify!($_type)),*]),*]);
+    const FIRST_TYPES: &[&[&str]] = expand!(&[$(&[$(stringify!($first_type)),*]),*]);
+    const TYPES: &[&[&[&str]]] = expand!(&[$(&[$(&[$(stringify!($_type)),*]),*]),*]);
 
     use core::fmt::Write;
 
@@ -33,7 +33,11 @@ fn generate_markers(
 
         buffer.push_str(" {} \n");
 
-        for constraint in core::iter::once(FIRST_TYPES[index]).chain(TYPES[index].iter().copied()) {
+        for constraint in FIRST_TYPES[index]
+            .iter()
+            .copied()
+            .chain(TYPES[index].iter().copied().flatten().copied())
+        {
             let mut chars = constraint.chars();
             let mut constraint_type = String::with_capacity(10);
             let mut needs_generic = false;
@@ -64,7 +68,7 @@ fn generate_markers(
 }
 
 #[crabtime::function]
-fn generate_wrapper_object(
+fn generate_alias(
     pattern!(
         $(
             #[mark(
@@ -81,25 +85,21 @@ fn generate_wrapper_object(
                 ),+
             )]
         )?
-        $(
-            #[wrap $($needs_indirection:literal)?]
-        )?
-        $name:ty: $_type:ty {
+        $name:ty: $_type:ty $({
             $(
                 $generic:ident: $constraints:ty;
             )+
-        }
+        })?
     ): _,
 ) {
     use core::fmt::Write;
 
     const NAME: &str = stringify!($name);
     const TYPE: &str = stringify!($_type);
-    const GENERICS: &[&str] = expand!(&[$(stringify!($generic)),*]);
-    const CONSTRAINTS: &[&str] = expand!(&[$(stringify!($constraints)),*]);
+    const GENERICS: &[&[&str]] = expand!(&[$(&[$(stringify!($generic)),*]),*]);
+    const CONSTRAINTS: &[&[&str]] = expand!(&[$(&[$(stringify!($constraints)),*]),*]);
     const UNSAFE_MARKERS: &[&[&str]] = expand!(&[$(&[$(stringify!($unsafe_marker)),*]),*]);
     const MARKERS: &[&[&str]] = expand!(&[$(&[$(stringify!($marker)),*]),*]);
-    const NEEDS_INDIRECTION: &[&[bool]] = expand!(&[$(&[$($needs_indirection),*]),*]);
 
     let mut clauses = String::with_capacity(96);
     let mut deserialize_clauses = String::with_capacity(96);
@@ -107,65 +107,18 @@ fn generate_wrapper_object(
     let mut clone_clauses = String::with_capacity(96);
     let mut generics = String::with_capacity(96);
 
-    let mut inner_type: &str = TYPE;
-    let mut constuction_statement: &str = "Self { inner }";
-
-    if let Some(needs_indirection) = NEEDS_INDIRECTION.get(0) {
-        match needs_indirection {
-            &[false] => {}
-            _ => {
-                inner_type = format!("crate::wrapper::Wrapper<{TYPE}>").leak() as &str;
-                constuction_statement = "Self { inner: crate::wrapper::Wrapper::new(inner) }";
-            }
-        }
-    }
-
-    for (generic, constraints) in GENERICS.iter().zip(CONSTRAINTS.iter()) {
+    for (generic, constraints) in GENERICS
+        .iter()
+        .copied()
+        .flatten()
+        .zip(CONSTRAINTS.iter().copied().flatten())
+    {
         let _ = writeln!(&mut generics, "{generic},");
         let _ = writeln!(&mut clauses, "{generic}: {constraints},");
-        let _ = writeln!(
-            &mut deserialize_clauses,
-            "{generic}: {constraints} + serde::de::DeserializeOwned,"
-        );
-        let _ = writeln!(&mut serialize_clauses, "{generic}: {constraints} + serde::Serialize,");
-        let _ = writeln!(&mut clone_clauses, "{generic}: {constraints} + Clone,");
     }
 
     crabtime::output! {
-        #[derive(Debug)]
-        pub struct {{NAME}} <{{generics}}>
-        where {{clauses}}
-        {
-            inner: {{inner_type}},
-        }
-
-        impl <{{generics}}> {{NAME}} <{{generics}}>
-        where {{clauses}}
-        {
-            pub const fn new(inner: {{TYPE}}) -> Self {
-                {{ constuction_statement }}
-            }
-        }
-
-        impl <{{generics}}> core::ops::Deref for {{NAME}} <{{generics}}>
-        where {{clauses}}
-        {
-            type Target = {{inner_type}};
-
-            #[inline]
-            fn deref(&self) -> &Self::Target {
-                &self.inner
-            }
-        }
-
-        impl <{{generics}}> core::ops::DerefMut for {{NAME}} <{{generics}}>
-        where {{clauses}}
-        {
-
-            fn deref_mut(&mut self) -> &mut Self::Target {
-                &mut self.inner
-            }
-        }
+        pub type {{NAME}}<{{generics}}> = {{TYPE}};
     }
 
     UNSAFE_MARKERS
@@ -176,51 +129,11 @@ fn generate_wrapper_object(
         .chain(MARKERS.iter().copied().flatten().map(|marker| ("", marker)))
         .for_each(|(prefix, marker)| {
             crabtime::output! {
-                {{prefix}} impl <{{generics}}> {{marker}} for {{NAME}} <{{generics}}>
+                {{prefix}} impl <{{generics}}> {{marker}} for {{TYPE}}
                 where {{clauses}}
                 {}
             }
         });
-
-    crabtime::output! {
-        impl<'de, {{generics}}> serde::Deserialize<'de> for {{NAME}} <{{generics}}>
-        where {{deserialize_clauses}}
-        {
-            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-            where
-                D: serde::Deserializer<'de>,
-            {
-                let inner = serde::Deserialize::deserialize(deserializer)?;
-
-                Ok(Self { inner })
-            }
-        }
-    }
-
-    crabtime::output! {
-        impl<{{generics}}> serde::Serialize for {{NAME}} <{{generics}}>
-        where {{serialize_clauses}}
-        {
-            fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-            where
-                S: serde::Serializer,
-            {
-                self.inner.serialize(serializer)
-            }
-        }
-    }
-
-    crabtime::output! {
-        impl<{{generics}}> Clone for {{NAME}} <{{generics}}>
-        where {{clone_clauses}}
-        {
-            fn clone(&self) -> Self {
-                Self {
-                    inner: self.inner.clone(),
-                }
-            }
-        }
-    }
 }
 
 #[crabtime::function]
@@ -653,8 +566,8 @@ fn generate_object(
 }
 
 #[allow(clippy::single_component_path_imports)]
+pub(super) use generate_alias;
+#[allow(clippy::single_component_path_imports)]
 pub(super) use generate_markers;
 #[allow(clippy::single_component_path_imports)]
 pub(super) use generate_object;
-#[allow(clippy::single_component_path_imports)]
-pub(super) use generate_wrapper_object;

@@ -4,14 +4,14 @@ use core::fmt::Debug;
 use core::str::FromStr;
 
 super::macros::generate_markers! {
-    HrefLanguage: Debug: String, &str, Vec<T>, Option<T>, NotPresent;
-    Link: Debug: String, &str, Option<T>, NotPresent;
+    IsHrefLanguage: Debug: String, &str, Vec<T>, Option<T>, NotPresent;
+    IsLink: Debug: String, &str, Option<T>, NotPresent;
 }
 
 super::macros::generate_object! {
-    #[mark(Link)]
+    #[mark(IsLink)]
     #[unsafe_mark(Present)]
-    LinkObject {
+    Link {
         // this needs to be present
         href: HREF: FromStr + Debug + Present;
         r#type, kind: Option<TYPE>: FromStr + Debug;
@@ -21,7 +21,7 @@ super::macros::generate_object! {
         described_by: Option<DESCRIBEDBY>: FromStr + Debug;
         title: Option<TITLE>: FromStr + Debug;
         #[rename(hreflang)]
-        href_language: Option<HREFLANGUAGE>: HrefLanguage;
+        href_language: Option<HREFLANGUAGE>: IsHrefLanguage;
         #[rename(meta)]
         metadata, meta: Option<METADATA>: Debug;
     }

@@ -1,81 +1,81 @@
-use super::error::Errors;
-use super::jsonapi::JsonApi;
-use super::link::Link;
-use super::pagination::Pagination;
+use super::error::IsErrorCollection;
+use super::json_api::IsJsonApi;
+use super::link::IsLink;
+use super::pagination_links::IsPaginationLinks;
 use super::present::{NotPresent, Present};
-use super::resource::{IncludedResources, Resource};
+use super::resource::{IsResource, IsResourceWithoutLidCollection};
 
 use core::fmt::Debug;
 
 super::macros::generate_markers! {
-    Links: Debug: Option<T>, NotPresent;
+    IsDocumentLinks: Debug: Option<T>, NotPresent;
 }
 
 super::macros::generate_object! {
-    #[mark(Links)]
+    #[mark(IsDocumentLinks)]
     #[unsafe_mark(Present)]
     DocumentLinksObject {
         #[flatten]
-        pagination: Option<PAGINATION>: Pagination;
-        current, this: Option<CURRENT>: Link;
-        related: Option<RELATED>: Link;
+        pagination_links, pagination: Option<PAGINATION>: IsPaginationLinks;
+        current, this: Option<CURRENT>: IsLink;
+        related: Option<RELATED>: IsLink;
         #[rename(describedby)]
-        described_by: Option<DESCRIBEDBY>: Link;
+        described_by: Option<DESCRIBEDBY>: IsLink;
     }
 }
 
 super::macros::generate_object! {
-    DocumentObject {
-        data: Option<DATA>: Resource;
-        included: Option<INCLUDED>: IncludedResources;
-        errors: Option<ERRORS>: Errors;
-        json_api: Option<JSONAPI>: JsonApi;
-        links: Option<LINKS>: Links;
+    Document {
+        data: Option<DATA>: IsResource;
+        included: Option<INCLUDED>: IsResourceWithoutLidCollection;
+        errors: Option<ERRORS>: IsErrorCollection;
+        json_api: Option<JSONAPI>: IsJsonApi;
+        links: Option<LINKS>: IsDocumentLinks;
         #[rename(meta)]
         metadata, meta: Option<METADATA>: Debug;
     }
 }
 
-super::macros::generate_wrapper_object! {
-    #[wrap]
-    DataDocumentObject: DocumentObject<DATA, INCLUDED, NotPresent, JSONAPI, LINKS, METADATA> {
-        DATA: Resource + Present;
-        INCLUDED: IncludedResources;
-        JSONAPI: JsonApi;
-        LINKS: Links;
-        METADATA: Debug;
+super::macros::generate_object! {
+    DocumentWithData {
+        data: DATA: IsResource + Present;
+        included: Option<INCLUDED>: IsResourceWithoutLidCollection;
+        json_api: Option<JSONAPI>: IsJsonApi;
+        links: Option<LINKS>: IsDocumentLinks;
+        #[rename(meta)]
+        metadata, meta: Option<METADATA>: Debug;
     }
 }
 
-super::macros::generate_wrapper_object! {
-    #[wrap]
-    ErrorDocumentObject: DocumentObject<NotPresent, NotPresent, ERRORS, JSONAPI, LINKS, METADATA> {
-        ERRORS: Errors + Present;
-        JSONAPI: JsonApi;
-        LINKS: Links;
-        METADATA: Debug;
+super::macros::generate_object! {
+    DocumentWithErrors {
+        errors: ERRORS: IsErrorCollection + Present;
+        json_api: Option<JSONAPI>: IsJsonApi;
+        links: Option<LINKS>: IsDocumentLinks;
+        #[rename(meta)]
+        metadata, meta: Option<METADATA>: Debug;
     }
 }
 
 impl<ERRORS, JSONAPI, LINKS, METADATA> core::error::Error
-    for ErrorDocumentObject<ERRORS, JSONAPI, LINKS, METADATA>
+    for DocumentWithErrors<ERRORS, JSONAPI, LINKS, METADATA>
 where
-    ERRORS: Errors + Present,
-    JSONAPI: JsonApi,
-    LINKS: Links,
+    ERRORS: IsErrorCollection + Present,
+    JSONAPI: IsJsonApi,
+    LINKS: IsDocumentLinks,
     METADATA: Debug,
 {
 }
 
 impl<ERRORS, JSONAPI, LINKS, METADATA> core::fmt::Display
-    for ErrorDocumentObject<ERRORS, JSONAPI, LINKS, METADATA>
+    for DocumentWithErrors<ERRORS, JSONAPI, LINKS, METADATA>
 where
-    ERRORS: Errors + Present,
-    JSONAPI: JsonApi,
-    LINKS: Links,
+    ERRORS: IsErrorCollection + Present,
+    JSONAPI: IsJsonApi,
+    LINKS: IsDocumentLinks,
     METADATA: Debug,
 {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        self.inner.errors().fmt(f)
+        self.errors().fmt(f)
     }
 }

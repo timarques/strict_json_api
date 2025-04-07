@@ -1,26 +1,29 @@
-use super::link::Link;
+use super::link::IsLink;
 use super::present::{NotPresent, Present};
 use core::fmt::Debug;
 use core::str::FromStr;
 
 super::macros::generate_markers! {
-    Source: Debug: Option<T>, NotPresent;
-    Errors: Debug: Option<T>, NotPresent, Vec<T>;
+    IsErrorSource: Debug: Option<T>, NotPresent;
+    IsErrorCollection: Debug: Option<T>, NotPresent, Vec<T>;
 }
 
+// spec refers this as may, therefore no trait
 super::macros::generate_object! {
     #[unsafe_mark(Present)]
-    Links {
+    ErrorLinks {
         #[rename(self)]
-        current, this: Option<CURRENT>: Link;
-        about: Option<ABOUT>: Link;
+        current: Option<CURRENT>: IsLink;
+        about: Option<ABOUT>: IsLink;
+        #[flatten]
+        others: Option<OTHERS>: Debug;
     }
 }
 
 super::macros::generate_object! {
-    #[mark(Source)]
+    #[mark(IsErrorSource)]
     #[unsafe_mark(Present)]
-    SourceObject {
+    ErrorSource {
         pointer: Option<POINTER>: FromStr + Debug;
         parameter: Option<PARAMETER>: FromStr + Debug;
         header: Option<HEADER>: FromStr + Debug;
@@ -35,17 +38,16 @@ super::macros::generate_object! {
         status: Option<STATUS>: FromStr + Debug;
         detail: Option<DETAIL>: FromStr + Debug;
         title: Option<TITLE>: FromStr + Debug;
-        source: Option<SOURCE>: Source;
+        source: Option<SOURCE>: IsErrorSource;
         links: Option<LINKS>: Debug;
         #[rename(meta)]
-        metadata, meta: Option<METADATA>: Debug;
+        metadata: Option<METADATA>: Debug;
     }
 }
 
-super::macros::generate_wrapper_object! {
-    #[mark(Errors)]
+super::macros::generate_alias! {
+    #[mark(IsErrorCollection)]
     #[unsafe_mark(Present)]
-    #[wrap]
     ErrorCollection:
     Vec<
         Error<
@@ -65,7 +67,7 @@ super::macros::generate_wrapper_object! {
         STATUS: FromStr + Debug;
         DETAIL: FromStr + Debug;
         TITLE: FromStr + Debug;
-        SOURCE: Source;
+        SOURCE: IsErrorSource;
         LINKS: Debug;
         METADATA: Debug;
     }

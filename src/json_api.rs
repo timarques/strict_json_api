@@ -1,23 +1,23 @@
-use super::link::Link;
+use super::link::IsLink;
 use super::present::{NotPresent, Present};
 use core::fmt::Debug;
 
 use core::str::FromStr;
 
 super::macros::generate_markers! {
-    JsonApi: Debug: Option<T>, NotPresent;
+    IsJsonApi: Debug: Option<T>, NotPresent;
 }
 
 super::macros::generate_object! {
-    #[mark(JsonApi)]
+    #[mark(IsJsonApi)]
     #[unsafe_mark(Present)]
-    JsonApiObject {
+    JsonApi {
         version: Option<VERSION>: FromStr + Debug;
         #[rename(ext)]
-        extensions: Vec<EXTENSION>: Link;
+        extensions: Vec<EXTENSION>: IsLink;
         #[rename(profile)]
-        profiles: Vec<PROFILE>: Link;
+        profiles: Vec<PROFILE>: IsLink;
         #[rename(meta)]
-        metadata, meta: Option<METADATA>: Debug;
+        metadata: Option<METADATA>: Debug;
     }
 }
