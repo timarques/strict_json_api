@@ -14,7 +14,7 @@ super::macros::generate_markers! {
 super::macros::generate_object! {
     #[mark(IsDocumentLinks)]
     #[unsafe_mark(Present)]
-    DocumentLinksObject {
+    DocumentLinks {
         #[flatten]
         pagination_links, pagination: Option<PAGINATION>: IsPaginationLinks;
         current, this: Option<CURRENT>: IsLink;
