@@ -193,6 +193,7 @@ fn generate_object(
     let mut generic_types_string = String::with_capacity(256);
     let mut struct_fields_string = String::with_capacity(256);
     let mut constraint_definitions_string = String::with_capacity(256);
+    let mut constructor_assignments = String::with_capacity(64);
 
     let mut attribute_names = vec![vec![]; FIRST_ATTRIBUTE_NAMES.len()];
     let mut escaped_attribute_names = vec![vec![]; ATTRIBUTE_NAMES.len()];
@@ -211,11 +212,14 @@ fn generate_object(
 
         writeln!(&mut struct_fields_string, "{main_attribute}: {value_type},").unwrap();
 
+        constructor_assignments.push_str(main_attribute);
+        constructor_assignments.push(',');
+
         for attribute_name in
             core::iter::once(main_attribute).chain(ATTRIBUTE_NAMES[index].iter().copied())
         {
-            attribute_names[index].push(attribute_name);
             escaped_attribute_names[index].push(attribute_name.replace("r#", ""));
+            attribute_names[index].push(attribute_name);
         }
 
         extracted_inner_value_types[index] = extract_inner_type(value_type);
@@ -242,7 +246,7 @@ fn generate_object(
 
     let mut methods_definitions_string = String::with_capacity(256);
     for (index, attribute_names) in attribute_names.iter().enumerate() {
-        let main_attribute_name = attribute_names[0];
+        let main_attribute_name = &attribute_names[0];
 
         // is a T not Option<T>
         if !is_value_optional_list[index] {
@@ -297,6 +301,12 @@ fn generate_object(
         impl<{{generic_types_string}}> {{STRUCT_NAME}}<{{generic_types_string}}>
         where {{constraint_definitions_string}}
         {
+            pub fn new({{struct_fields_string}}) -> Self {
+                Self {
+                    {{constructor_assignments}}
+                }
+            }
+
             {{methods_definitions_string}}
         }
     }
@@ -353,7 +363,7 @@ fn generate_object(
             }
         }
 
-        let main_attribute_name = attributes_names[0];
+        let main_attribute_name = &attributes_names[0];
         let value_type = &extracted_inner_value_types[index];
 
         let mut accessors = String::with_capacity(96);
@@ -389,12 +399,11 @@ fn generate_object(
             writeln!(&mut clonable_constraints_string, "{constraint_definition} + Clone,").unwrap();
         }
 
-        let main_attribute_name = attribute_names[0];
-        writeln!(
+        let main_attribute_name = &attribute_names[0];
+        let _ = writeln!(
             clone_field_assignments,
             "{main_attribute_name}: self.{main_attribute_name}.clone(),"
-        )
-        .unwrap();
+        );
     }
 
     crabtime::output! {
