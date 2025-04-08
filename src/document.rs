@@ -2,16 +2,15 @@ use super::error::IsErrorCollection;
 use super::json_api::IsJsonApi;
 use super::link::IsLink;
 use super::pagination_links::IsPaginationLinks;
-use super::present::{NotPresent, Present};
+use super::present::Present;
 use super::resource::{IsResource, IsResourceResponse, IsResourceResponseCollection};
 
 use core::fmt::Debug;
 
 super::macros::generate_markers! {
     IsDocumentLinks: Debug {
-        #[wrap]
-        Option;
-        NotPresent;
+        #[dyn]
+        IsPaginationLinks;
     }
     IsDocumentPrimaryData: Debug {
         #[dyn]
