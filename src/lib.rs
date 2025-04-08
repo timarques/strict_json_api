@@ -40,9 +40,9 @@
 //! 4. **Handling Presence:** JSON:API defines many optional fields. This crate provides:
 //!    * **`Option<T>`:** Standard way to represent maybe-present fields. **Recommended default**.
 //!    * **`present::NotPresent`:** Marker for guaranteed absence, allowing optimization.
-//!    * **`present::Present`:** Unsafe trait for guaranteed presence, enabling optimizations.
+//!    * **`present::IsPresent`:** Unsafe trait for guaranteed presence, enabling optimizations.
 //!    * Use `Option<T>` for uncertain presence, `NotPresent` for known-absent fields,
-//!      and `Present` only when guaranteed presence is needed for optimization.
+//!      and `IsPresent` only when guaranteed presence is needed for optimization.
 
 #![doc = include_str!(concat!(env!("OUT_DIR"), "/examples.md"))]
 

@@ -1,4 +1,4 @@
-use super::present::{NotPresent, Present};
+use super::present::{IsPresent, NotPresent};
 
 use core::fmt::Debug;
 use core::str::FromStr;
@@ -27,10 +27,10 @@ super::macros::generate_markers! {
 
 super::macros::generate_object! {
     #[mark(IsLink)]
-    #[unsafe_mark(Present)]
+    #[unsafe_mark(IsPresent)]
     Link {
         // this needs to be present
-        href: HREF: FromStr + Debug + Present;
+        href: HREF: FromStr + Debug + IsPresent;
         #[rename(r#type)]
         resource_type: Option<TYPE>: FromStr + Debug;
         #[rename(rel)]

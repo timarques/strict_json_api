@@ -1,4 +1,4 @@
-use super::present::{NotPresent, Present};
+use super::present::{IsPresent, NotPresent};
 use super::resource_identifier::{IsResourceIdentifierSingle, IsResourceIdentifierWithoutLid};
 
 use core::fmt::Debug;
@@ -23,7 +23,7 @@ super::macros::generate_markers! {
 
 super::macros::generate_object! {
     #[mark(IsResource)]
-    #[unsafe_mark(Present)]
+    #[unsafe_mark(IsPresent)]
     Resource {
         #[flatten]
         identifier: Option<IDENTIFIER>: IsResourceIdentifierSingle;
@@ -35,7 +35,6 @@ super::macros::generate_object! {
 
 super::macros::generate_alias! {
     #[mark(IsResource)]
-    #[unsafe_mark(Present)]
     ResourceCollection:
     Vec<
         Resource<

@@ -2,7 +2,7 @@ use super::error::IsErrorCollection;
 use super::json_api::IsJsonApi;
 use super::link::IsLink;
 use super::pagination_links::IsPaginationLinks;
-use super::present::Present;
+use super::present::IsPresent;
 use super::resource::{IsResource, IsResourceResponse, IsResourceResponseCollection};
 
 use core::fmt::Debug;
@@ -28,7 +28,7 @@ super::macros::generate_markers! {
 
 super::macros::generate_object! {
     #[mark(IsDocumentLinks)]
-    #[unsafe_mark(Present)]
+    #[unsafe_mark(IsPresent)]
     DocumentLinks {
         #[flatten]
         pagination: Option<PAGINATION>: IsPaginationLinks;
@@ -53,7 +53,7 @@ super::macros::generate_object! {
 
 super::macros::generate_object! {
     DocumentRequest {
-        data: DATA: IsDocumentPrimaryData + Present;
+        data: DATA: IsDocumentPrimaryData + IsPresent;
         json_api: Option<JSONAPI>: IsJsonApi;
         links: Option<LINKS>: IsDocumentLinks;
         #[rename(meta)]
@@ -63,7 +63,7 @@ super::macros::generate_object! {
 
 super::macros::generate_object! {
     DocumentSuccessResponse {
-        data: DATA: IsDocumentPrimaryDataResponse + Present;
+        data: DATA: IsDocumentPrimaryDataResponse + IsPresent;
         included: Option<INCLUDED>: IsDocumentIncluded;
         json_api: Option<JSONAPI>: IsJsonApi;
         links: Option<LINKS>: IsDocumentLinks;
@@ -74,7 +74,7 @@ super::macros::generate_object! {
 
 super::macros::generate_object! {
     DocumentErrorResponse {
-        errors: ERRORS: IsErrorCollection + Present;
+        errors: ERRORS: IsErrorCollection + IsPresent;
         json_api: Option<JSONAPI>: IsJsonApi;
         links: Option<LINKS>: IsDocumentLinks;
         #[rename(meta)]
@@ -85,7 +85,7 @@ super::macros::generate_object! {
 impl<ERRORS, JSONAPI, LINKS, METADATA> core::error::Error
     for DocumentErrorResponse<ERRORS, JSONAPI, LINKS, METADATA>
 where
-    ERRORS: IsErrorCollection + Present,
+    ERRORS: IsErrorCollection + IsPresent,
     JSONAPI: IsJsonApi,
     LINKS: IsDocumentLinks,
     METADATA: Debug,
@@ -95,7 +95,7 @@ where
 impl<ERRORS, JSONAPI, LINKS, METADATA> core::fmt::Display
     for DocumentErrorResponse<ERRORS, JSONAPI, LINKS, METADATA>
 where
-    ERRORS: IsErrorCollection + Present,
+    ERRORS: IsErrorCollection + IsPresent,
     JSONAPI: IsJsonApi,
     LINKS: IsDocumentLinks,
     METADATA: Debug,

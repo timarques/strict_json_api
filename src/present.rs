@@ -33,11 +33,12 @@ impl FromStr for NotPresent {
 }
 
 #[allow(clippy::missing_safety_doc)]
-pub unsafe trait Present {}
+pub unsafe trait IsPresent {}
 
-unsafe impl Present for String {}
-unsafe impl Present for u16 {}
-unsafe impl Present for u32 {}
-unsafe impl Present for usize {}
-unsafe impl Present for f32 {}
-unsafe impl<T> Present for Option<T> {}
+unsafe impl IsPresent for String {}
+unsafe impl IsPresent for u16 {}
+unsafe impl IsPresent for u32 {}
+unsafe impl IsPresent for usize {}
+unsafe impl IsPresent for f32 {}
+unsafe impl<T> IsPresent for Option<T> {}
+unsafe impl<T> IsPresent for Vec<T> where T: IsPresent {}

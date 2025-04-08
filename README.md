@@ -22,7 +22,7 @@
 1. **Generic Structures**: Core JSON:API constructs use generic Rust structs where you provide specific types
 2. **Marker Traits**: Traits ensure types satisfy JSON:API structural requirements
 3. **String Representation**: Uses `FromStr` constraint to allow both `String` and custom types
-4. **Presence Handling**: Provides `Option<T>`, `NotPresent`, and `Present` mechanisms for optional fields
+4. **Presence Handling**: Provides `Option<T>`, `NotPresent`, and `IsPresent` mechanisms for optional fields
 
 ## Installation
 

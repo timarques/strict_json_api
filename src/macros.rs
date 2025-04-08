@@ -236,7 +236,7 @@ fn generate_object(
             constraint_definitions_string.push('\n');
 
             constraint_definitions_list[index] = Some(generic_constraint);
-            contains_present_constraint[index] = constraint.contains("Present");
+            contains_present_constraint[index] = constraint.contains("IsPresent");
         }
     }
 
@@ -259,7 +259,7 @@ fn generate_object(
                     }
                 });
             }
-        // is a Option<T> with Present constraint
+        // is a Option<T> with IsPresent constraint
         } else if contains_present_constraint[index] {
             let value_type = &extracted_inner_value_types[index];
             for attribute_name in attribute_names.iter() {
@@ -336,11 +336,11 @@ fn generate_object(
         });
 
     // -------------------------------
-    // Present acessors
+    // IsPresent acessors
     // -------------------------------
 
     for (index, attributes_names) in attribute_names.iter().enumerate() {
-        // is a T or doesn't have constraint or have Present constraint
+        // is a T or doesn't have constraint or have IsPresent constraint
         if !is_value_optional_list[index]
             || constraint_definitions_list[index].is_none()
             || contains_present_constraint[index]
@@ -354,7 +354,7 @@ fn generate_object(
                 if list_index == index {
                     writeln!(
                         &mut present_constraints_string,
-                        "{constraint_definition} + crate::present::Present,"
+                        "{constraint_definition} + crate::present::IsPresent,"
                     )
                     .unwrap();
                 } else {

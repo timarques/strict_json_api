@@ -1,5 +1,5 @@
 use super::link::IsLink;
-use super::present::{NotPresent, Present};
+use super::present::{IsPresent, NotPresent};
 use core::fmt::Debug;
 
 super::macros::generate_markers! {
@@ -12,7 +12,7 @@ super::macros::generate_markers! {
 
 super::macros::generate_object! {
     #[mark(IsPaginationLinks)]
-    #[unsafe_mark(Present)]
+    #[unsafe_mark(IsPresent)]
     PaginationLinks {
         first: Option<FIRST>: IsLink;
         last: Option<LAST>: IsLink;

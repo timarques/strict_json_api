@@ -1,5 +1,5 @@
 use super::link::IsLink;
-use super::present::{NotPresent, Present};
+use super::present::{IsPresent, NotPresent};
 use core::fmt::Debug;
 
 use core::str::FromStr;
@@ -14,7 +14,7 @@ super::macros::generate_markers! {
 
 super::macros::generate_object! {
     #[mark(IsJsonApi)]
-    #[unsafe_mark(Present)]
+    #[unsafe_mark(IsPresent)]
     JsonApi {
         version: Option<VERSION>: FromStr + Debug;
         #[rename(ext)]

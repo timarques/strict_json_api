@@ -1,5 +1,5 @@
 use super::link::IsLink;
-use super::present::{NotPresent, Present};
+use super::present::{IsPresent, NotPresent};
 use core::fmt::Debug;
 use core::str::FromStr;
 
@@ -20,7 +20,7 @@ super::macros::generate_markers! {
 
 // spec refers this as may, therefore no trait
 super::macros::generate_object! {
-    #[unsafe_mark(Present)]
+    #[unsafe_mark(IsPresent)]
     ErrorLinks {
         #[rename(self)]
         current: Option<CURRENT>: IsLink;
@@ -32,7 +32,7 @@ super::macros::generate_object! {
 
 super::macros::generate_object! {
     #[mark(IsErrorSource)]
-    #[unsafe_mark(Present)]
+    #[unsafe_mark(IsPresent)]
     ErrorSource {
         pointer: Option<POINTER>: FromStr + Debug;
         parameter: Option<PARAMETER>: FromStr + Debug;
@@ -41,7 +41,7 @@ super::macros::generate_object! {
 }
 
 super::macros::generate_object! {
-    #[unsafe_mark(Present)]
+    #[unsafe_mark(IsPresent)]
     Error {
         id: Option<ID>: FromStr + Debug;
         code: Option<CODE>: FromStr + Debug;
@@ -57,7 +57,6 @@ super::macros::generate_object! {
 
 super::macros::generate_alias! {
     #[mark(IsErrorCollection)]
-    #[unsafe_mark(Present)]
     ErrorCollection:
     Vec<
         Error<

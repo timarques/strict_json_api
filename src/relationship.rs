@@ -1,6 +1,6 @@
 use super::link::IsLink;
 use super::pagination_links::IsPaginationLinks;
-use super::present::Present;
+use super::present::IsPresent;
 use super::resource_identifier::{
     IsResourceIdentifier, IsResourceIdentifierCollecion, IsResourceIdentifierSingle,
 };
@@ -27,7 +27,7 @@ super::macros::generate_markers! {
 
 super::macros::generate_object! {
     #[mark(IsRelationshipLinks)]
-    #[unsafe_mark(Present)]
+    #[unsafe_mark(IsPresent)]
     RelationshipLinks {
         #[rename(self)]
         current, this: Option<CURRENT>: IsLink;
