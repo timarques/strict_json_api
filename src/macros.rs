@@ -254,7 +254,7 @@ fn generate_object(
             for attribute_name in attribute_names.iter() {
                 methods_definitions_string.push_str(&crabtime::quote! {
                     #[inline]
-                    pub fn {{attribute_name}}(&self) -> &{{value_type}} {
+                    pub const fn {{attribute_name}}(&self) -> &{{value_type}} {
                         &self.{{main_attribute_name}}
                     }
                 });
@@ -278,7 +278,7 @@ fn generate_object(
             for escaped_attribute_name in &escaped_attribute_names[index] {
                 methods_definitions_string.push_str(&crabtime::quote! {
                     #[inline]
-                    pub fn get_{{escaped_attribute_name}}(&self) -> Option<&{{value_type}}> {
+                    pub const fn get_{{escaped_attribute_name}}(&self) -> Option<&{{value_type}}> {
                         self.{{main_attribute_name}}.as_ref()
                     }
                 });
@@ -301,7 +301,7 @@ fn generate_object(
         impl<{{generic_types_string}}> {{STRUCT_NAME}}<{{generic_types_string}}>
         where {{constraint_definitions_string}}
         {
-            pub fn new({{struct_fields_string}}) -> Self {
+            pub const fn new({{struct_fields_string}}) -> Self {
                 Self {
                     {{constructor_assignments}}
                 }

@@ -45,6 +45,7 @@
 //!      and `IsPresent` only when guaranteed presence is needed for optimization.
 
 #![doc = include_str!(concat!(env!("OUT_DIR"), "/examples.md"))]
+#![allow(clippy::too_many_arguments)]
 
 pub mod document;
 pub mod error;
